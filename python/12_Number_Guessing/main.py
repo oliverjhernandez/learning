@@ -1,11 +1,6 @@
 import random
 
 
-print("Welcome to the Number Guessing game!!")
-print("I'm thinking of a number between 1 and 100.")
-response = input("Choose a difficulty. Type 'easy' or 'hard'.")
-
-
 def set_difficulty(difficulty):
     if difficulty == "easy":
         return 10
@@ -15,7 +10,7 @@ def set_difficulty(difficulty):
         return 0
 
 
-def play_game(attempts):
+def play_game(pick, attempts):
     result = 0
     for _ in range(attempts):
         guess = int(input("Make a guess: "))
@@ -35,16 +30,17 @@ def play_game(attempts):
     return result
 
 
-pick = random.choice(range(0, 100))
-print(f"Pick: {pick}")
-
-
 def game():
+    print("Welcome to the Number Guessing game!!")
+    print("I'm thinking of a number between 1 and 100.")
+    response = input("Choose a difficulty. Type 'easy' or 'hard'.")
+    pick = random.choice(range(0, 100))
+    print(f"Pick: {pick}")
     attempts = set_difficulty(response)
     if attempts == 0:
         print("Wrong option. Try again.")
         exit()
-    play_game(attempts)
+    play_game(pick, attempts)
 
 
 game()
