@@ -1,7 +1,8 @@
 import express from 'express'
 import * as path from 'path'
-import { v4 as uuid } from 'uuid'
 import methodOverride from 'method-override'
+import { commentsRepo, IComment } from './repository/Comments'
+import { connect } from 'mongoose'
 
 const PORT = 8080
 const HOST = '0.0.0.0'
@@ -14,40 +15,12 @@ app.use(methodOverride('_method'))
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
-let comments = [
-  {
-    id: uuid(),
-    author: 'Corina',
-    comment: 'lol that is so funny',
-  },
-  {
-    id: uuid(),
-    author: 'Oliver',
-    comment: 'I love Frida',
-  },
-  {
-    id: uuid(),
-    author: 'Tati',
-    comment: 'I wanna party',
-  },
-  {
-    id: uuid(),
-    author: 'Frida',
-    comment: 'woof woof',
-  },
-  {
-    id: uuid(),
-    author: 'Mia',
-    comment: 'meow meow',
-  },
-  {
-    id: uuid(),
-    author: 'Fiona',
-    comment: '... ...',
-  },
-]
+connect('mongodb://localhost:27017/comments', {
+  serverSelectionTimeoutMS: 5000,
+})
 
-app.get('/comments', (_, res) => {
+app.get('/comments', async (_, res) => {
+  const comments = await commentsRepo.fetchAll()
   res.render('comments/index', { comments })
 })
 
@@ -57,36 +30,39 @@ app.get('/comments/new', (_, res) => {
 
 app.post('/comments', (req, res) => {
   const { author, comment } = req.body
-  comments.push({ id: uuid(), author: author, comment: comment })
+  const comm: Partial<IComment> = {
+    author: author,
+    comment: comment,
+  }
+  commentsRepo.storeComment(comm)
   res.redirect('/comments')
 })
 
-app.get('/comments/:id', (req, res) => {
+app.get('/comments/:id', async (req, res) => {
   const { id } = req.params
-  const comment = comments.find((c) => c.id === id)
+  const comment = await commentsRepo.fetchCommentById(id)
   res.render('comments/show', { comment })
 })
 
-app.get('/comments/:id/edit', (req, res) => {
+app.get('/comments/:id/edit', async (req, res) => {
   const { id } = req.params
-  const comment = comments.find((c) => c.id === id)
+  const comment = await commentsRepo.fetchCommentById(id)
   res.render('comments/update', { comment })
 })
 
-app.patch('/comments/:id', (req, res) => {
+app.patch('/comments/:id', async (req, res) => {
   const { id } = req.params
-  const newC = { id: id, author: req.body.author, comment: req.body.comment }
-  const oldCI = comments.findIndex((c) => c.id === id)
-  if (oldCI !== undefined) {
-    comments.splice(oldCI, 1, newC)
+  const newComment: Partial<IComment> = {
+    author: req.body.author,
+    comment: req.body.comment,
   }
+  commentsRepo.updateDoc(id, newComment)
   res.redirect('/comments')
 })
 
 app.delete('/comments/:id', (req, res) => {
   const { id } = req.params
-  const comI = comments.findIndex((c) => c.id === id)
-  comments.splice(comI, 1)
+  commentsRepo.deleteDoc(id)
   res.redirect('/comments')
 })
 
