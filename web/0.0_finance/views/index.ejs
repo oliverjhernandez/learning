@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transactions</title>
+  </head>
+  <body>
+
+    <h1>Transactions</h1>
+    <ul>
+      <% for (const tr of transactions) {%>
+      <li><%= tr.type %> - <%= tr.amount %> - <%= tr.description %> 
+        <a href="/transactions/<%= tr._id%>">Details</a>
+      <%}%>
+    </ul>
+  
+  </body>
+</html>

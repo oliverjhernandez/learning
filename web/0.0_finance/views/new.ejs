@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transaction</title>
+  </head>
+  <body>
+    <h1>New Transaction</h1>
+    <form action="/transactions" method="POST">
+      <label for="type">Type</label>
+      <input type="text" name="type" id="type">
+      <label for="amount">Amount</label>
+      <input type="text" name="amount" id="amount">
+      <label for="description">Description</label>
+      <input type="text" name="description" id="description">
+        <button>Save</button>
+    </form>
+    <a href="/transactions">All Transactions</a>
+  </body>
+</html>

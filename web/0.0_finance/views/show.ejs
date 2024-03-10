@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transaction</title>
+  </head>
+  <body>
+    <h1>Transaction</h1>
+    <ul>
+     <li> <%= transaction.type %> </li>
+     <li> <%= transaction.amount %> </li>
+     <li> <%= transaction.description %> </li>
+  </ul>
+    <a href="/transactions/<%= transaction._id%>/edit">Edit</a>
+    <form action="/transaction/<%=transaction._id%>?_method=DELETE" method="POST">
+      <button>Delete</button>
+    </form>
+
+    <a href="/transactions">All Transactions</a>
+  </body>
+</html>
