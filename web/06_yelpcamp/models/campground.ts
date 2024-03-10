@@ -1,4 +1,4 @@
-import { Model, Document, Schema, model } from 'mongoose'
+import { Document, Schema, model } from 'mongoose'
 
 interface ICampGround extends Document {
   title: string

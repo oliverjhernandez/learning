@@ -7,7 +7,7 @@ import { CampGround } from './models/campground'
 const PORT = 8080
 const HOST = '0.0.0.0'
 
-mongoose.connect('mongodb://localhost:27017/yelp-camp', {
+mongoose.connect(`mongodb://${HOST}:${PORT}/yelp-camp`, {
   autoIndex: true,
   autoCreate: true,
   serverSelectionTimeoutMS: 2000,
