@@ -2,14 +2,16 @@ import { Document, Schema, model } from 'mongoose'
 
 interface ICampGround extends Document {
   title: string
-  price: string
+  price: Number
+  image: string
   description: string
   location: String
 }
 
 const CampGroundSchema = new Schema({
   title: String,
-  price: String,
+  price: Number,
+  image: String,
   description: String,
   location: String,
 })

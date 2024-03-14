@@ -1,13 +1,17 @@
 import express from 'express'
 import methodOverride from 'method-override'
 import * as path from 'path'
-import * as mongoose from 'mongoose'
-import { CampGround } from './models/campground'
+import * as mg from 'mongoose'
+import { CampGround } from './models/Campground'
+// @ts-ignore
+import engine from 'ejs-mate'
 
-const PORT = 8080
-const HOST = '0.0.0.0'
+const WEB_PORT = 8080
+const WEB_HOST = '0.0.0.0'
+const MG_PORT = 27017
+const MG_HOST = 'localhost'
 
-mongoose.connect(`mongodb://${HOST}:${PORT}/yelp-camp`, {
+mg.connect(`mongodb://${MG_HOST}:${MG_PORT}/yelp-camp`, {
   autoIndex: true,
   autoCreate: true,
   serverSelectionTimeoutMS: 2000,
@@ -15,11 +19,13 @@ mongoose.connect(`mongodb://${HOST}:${PORT}/yelp-camp`, {
 
 const app = express()
 
+app.engine('ejs', engine)
+app.set('view engine', 'ejs')
+app.set('views', path.join(__dirname, 'views'))
+
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(methodOverride('_method'))
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'ejs')
 
 app.get('/campgrounds', async (_, res) => {
   const campgrounds = await CampGround.find({})
@@ -69,6 +75,10 @@ app.delete('/campgrounds/:id', async (req, res) => {
   }
 })
 
-app.listen(PORT, HOST, 3, () => {
-  console.log(`Listening on port http://${HOST}:${PORT}`)
+app.use((_, res) => {
+  res.status(404).send('NOT FOUND')
+})
+
+app.listen(WEB_PORT, WEB_HOST, 3, () => {
+  console.log(`Listening on port http://${WEB_HOST}:${WEB_PORT}`)
 })
