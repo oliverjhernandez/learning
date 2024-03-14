@@ -3,6 +3,8 @@ import methodOverride from 'method-override'
 import * as mg from 'mongoose'
 import * as path from 'path'
 import { Transaction } from './models/Transactions'
+// @ts-ignore
+import engine from 'ejs-mate'
 
 const WEB_PORT = 8080
 const WEB_HOST = '0.0.0.0'
@@ -20,6 +22,7 @@ const app = express()
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(methodOverride('_method'))
+app.engine('ejs', engine)
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
@@ -41,7 +44,6 @@ app.get('/transactions/:id', async (req, res) => {
 })
 
 app.post('/transactions', async (req, res) => {
-  console.log(req.body)
   const transaction = new Transaction({ ...req.body })
   await transaction.save()
   res.redirect('/transactions')

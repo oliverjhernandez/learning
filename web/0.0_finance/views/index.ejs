@@ -1,19 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Transactions</title>
-  </head>
-  <body>
-
-    <h1>Transactions</h1>
-    <ul>
-      <% for (const tr of transactions) {%>
-      <li><%= tr.type %> - <%= tr.amount %> - <%= tr.description %> 
-        <a href="/transactions/<%= tr._id%>">Details</a>
-      <%}%>
-    </ul>
-  
-  </body>
-</html>
+<% layout('layouts/boilerplate') -%>
+<h1>Transactions</h1>
+<ul>
+  <% for (const tr of transactions) {%>
+    <div class="card my-3">
+      <h5 class="card-header"><%=tr.description%></h5>
+      <div class="card-body row">
+        <div class="col">
+          <h5 class="card-title d-inline"><%=tr.type%></h5>
+          <p class="card-text d-inline"><%= tr.amount %> </p>
+        </div>
+        <div class="col-auto">
+          <a href="/transactions/<%= tr._id%>" class="btn btn-primary d-inline">Details</a>
+        </div>
+      </div>
+    </div>
+  <%}%>
+</ul>
