@@ -1,8 +1,12 @@
-import express from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import methodOverride from 'method-override'
 import * as path from 'path'
 import * as mg from 'mongoose'
 import { CampGround } from './models/Campground'
+import { ExpressError } from './utils/ExpressError'
+import { errorCatcher } from './utils/ErrorCatcher'
+import { campgroundSchema } from './schemas/campground'
+
 // @ts-ignore
 import engine from 'ejs-mate'
 
@@ -27,6 +31,16 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(methodOverride('_method'))
 
+const validateSchema = (req: Request, _: Response, next: NextFunction) => {
+  const { error } = campgroundSchema.validate(req.body)
+  if (error) {
+    const msg = error.details.map((el) => el.message).join(',')
+    throw new ExpressError(msg, 400)
+  } else {
+    next()
+  }
+}
+
 app.get('/campgrounds', async (_, res) => {
   const campgrounds = await CampGround.find({})
   res.render('campgrounds/index', { campgrounds })
@@ -36,48 +50,72 @@ app.get('/campgrounds/new', async (_, res) => {
   res.render('campgrounds/new')
 })
 
-app.post('/campgrounds', async (req, res) => {
-  const camp = new CampGround(req.body.campground)
-  await camp.save()
-  res.redirect(`/campgrounds/${camp._id}`)
-})
-
-app.get('/campgrounds/:id', async (req, res) => {
-  const campground = await CampGround.findById(req.params.id)
-  res.render('campgrounds/show', { campground })
-})
-
-app.get('/campgrounds/:id/edit', async (req, res) => {
-  const campground = await CampGround.findById(req.params.id)
-  res.render('campgrounds/edit', { campground })
-})
-
-app.patch('/campgrounds/:id', async (req, res) => {
-  const { id } = req.params
-  const camp = await CampGround.findByIdAndUpdate(id, {
-    ...req.body.campground,
-  })
-  if (camp !== null) {
+app.post(
+  '/campgrounds',
+  validateSchema,
+  errorCatcher(async (req: Request, res: Response, _: NextFunction) => {
+    const camp = new CampGround(req.body.campground)
+    await camp.save()
     res.redirect(`/campgrounds/${camp._id}`)
-  } else {
-    throw new Error('Could not update campground')
-  }
+  })
+)
+
+app.get(
+  '/campgrounds/:id',
+  errorCatcher(async (req, res) => {
+    const campground = await CampGround.findById(req.params.id)
+    res.render('campgrounds/show', { campground })
+  })
+)
+
+app.get(
+  '/campgrounds/:id/edit',
+  errorCatcher(async (req, res, _) => {
+    const campground = await CampGround.findById(req.params.id)
+    res.render('campgrounds/edit', { campground })
+  })
+)
+
+app.patch(
+  '/campgrounds/:id',
+  validateSchema,
+  errorCatcher(async (req, res) => {
+    const { id } = req.params
+    const camp = await CampGround.findByIdAndUpdate(id, {
+      ...req.body.campground,
+    })
+    if (camp !== null) {
+      res.redirect(`/campgrounds/${camp._id}`)
+    } else {
+      throw new Error('Could not update campground')
+    }
+  })
+)
+
+app.delete(
+  '/campgrounds/:id',
+  errorCatcher(async (req, res) => {
+    const { id } = req.params
+    const camp = await CampGround.findByIdAndDelete(id)
+    if (camp !== null) {
+      res.redirect(`/campgrounds`)
+    } else {
+      throw new Error('Could not delete campground')
+    }
+  })
+)
+
+app.all('*', (req, res, next) => {
+  next(new ExpressError('Page Not Found', 404))
 })
 
-app.delete('/campgrounds/:id', async (req, res) => {
-  const { id } = req.params
-  console.log('Hello')
-  const camp = await CampGround.findByIdAndDelete(id)
-  if (camp !== null) {
-    res.redirect(`/campgrounds`)
-  } else {
-    throw new Error('Could not delete campground')
+app.use(
+  (err: ExpressError, req: Request, res: Response, next: NextFunction) => {
+    const { statusCode = 500 } = err
+    if (!err.message) err.message = 'Internal Server Error'
+    res.status(statusCode).render('error', { err })
   }
-})
-
-app.use((_, res) => {
-  res.status(404).send('NOT FOUND')
-})
+)
 
 app.listen(WEB_PORT, WEB_HOST, 3, () => {
   console.log(`Listening on port http://${WEB_HOST}:${WEB_PORT}`)
