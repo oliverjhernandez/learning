@@ -39,5 +39,7 @@ app.use((err: ExpressError, _: Request, res: Response, __: NextFunction) => {
 })
 
 app.listen(WEB_PORT, WEB_HOST, () => {
-  console.log(`Listening on http://${WEB_HOST}:${WEB_PORT}`)
+  console.log(
+    `${new Date().toLocaleString()} - Listening on http://${WEB_HOST}:${WEB_PORT}`
+  )
 })
