@@ -6,6 +6,7 @@ import { ExpressError } from './utils/ExpressError'
 // @ts-ignore
 import engine from 'ejs-mate'
 import { transactionsRouter } from './routes/transactions'
+import { accountsRouter } from './routes/accounts'
 
 const WEB_PORT = 8080
 const WEB_HOST = '0.0.0.0'
@@ -26,7 +27,9 @@ app.use(methodOverride('_method'))
 app.engine('ejs', engine)
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
+
 app.use('/transactions', transactionsRouter)
+app.use('/accounts', accountsRouter)
 
 app.all('*', (_, __, next) => {
   next(new ExpressError('Page Not Found', 404))
@@ -35,7 +38,7 @@ app.all('*', (_, __, next) => {
 app.use((err: ExpressError, _: Request, res: Response, __: NextFunction) => {
   const { statusCode = 500 } = err
   if (!err.message) err.message = 'Internal Server Error'
-  res.status(statusCode).render('error', { err })
+  res.status(statusCode).render('general/error', { err })
 })
 
 app.listen(WEB_PORT, WEB_HOST, () => {

@@ -1,0 +1,18 @@
+<% layout('layouts/boilerplate') -%>
+<h1>Accounts</h1>
+<ul>
+  <% for (const account of accounts) {%>
+    <div class="card my-3">
+      <h5 class="card-header"><%=account.description%></h5>
+      <div class="card-body row">
+        <div class="col">
+          <h5 class="card-title d-inline"><%=account.type%></h5>
+          <p class="card-text d-inline"><%= account.amount %> </p>
+        </div>
+        <div class="col-auto">
+          <a href="/accounts/<%= account._id%>" class="btn btn-primary d-inline">Details</a>
+        </div>
+      </div>
+    </div>
+  <%}%>
+</ul>
