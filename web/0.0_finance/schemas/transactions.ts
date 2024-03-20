@@ -1,7 +1,12 @@
 import Joi from 'Joi'
 
-export const transactionSchema = Joi.object({
-  type: Joi.string().required(),
+export const transactionsSchema = Joi.object({
+  name: Joi.string().required(),
+  date: Joi.date().required(),
+  accountId: Joi.string().required(),
   amount: Joi.number().required().min(0),
-  description: Joi.string().required(),
+  currency: Joi.string().required(),
+  type: Joi.string().required(),
+  categoryId: Joi.string(),
+  notes: Joi.string(),
 })
