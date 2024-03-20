@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express'
-import { Transaction } from '../models/Transaction'
-import { errorHandler } from '../utils/ErrorHandler'
-import { transactionsSchema } from '../schemas/transactions'
+import { Account } from '../models/Account'
+import { accountsSchema } from '../schemas/accounts'
 import { ExpressError } from '../utils/ExpressError'
+import { errorHandler } from '../utils/ErrorHandler'
 
-const router = express.Router({})
+const router = express.Router()
 
 const validateSchema = (req: Request, _: Response, next: NextFunction) => {
-  const { error } = transactionsSchema.validate(req.body)
+  const { error } = accountsSchema.validate(req.body)
   if (error) {
     const msg = error.details.map((el) => el.message).join(',')
     throw new ExpressError(msg, 400)
@@ -17,34 +17,34 @@ const validateSchema = (req: Request, _: Response, next: NextFunction) => {
 }
 
 router.get('/', async (_, res) => {
-  const transactions = await Transaction.find()
-  res.render('transactions/index', { transactions })
+  const accounts = await Account.find()
+  res.render('accounts/index', { accounts })
 })
 
 router.get('/new', async (_, res) => {
-  res.render('transactions/new')
+  res.render('accounts/new')
 })
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params
-  const transaction = await Transaction.findById(id)
-  res.render('transactions/show', { transaction })
+  const account = await Account.findById(id)
+  res.render('accounts/show', { account })
 })
 
 router.post(
   '/',
   validateSchema,
   errorHandler(async (req: Request, res: Response, _: NextFunction) => {
-    const transaction = new Transaction({ ...req.body })
-    await transaction.save()
+    const account = new Account({ ...req.body })
+    await account.save()
     res.redirect('')
   })
 )
 
 router.get('/:id/edit', async (req, res) => {
   const { id } = req.params
-  const transaction = await Transaction.findById(id)
-  res.render('transactions/edit', { transaction })
+  const account = await Account.findById(id)
+  res.render('accounts/edit', { account })
 })
 
 router.patch(
@@ -52,15 +52,15 @@ router.patch(
   validateSchema,
   errorHandler(async (req, res) => {
     const { id } = req.params
-    await Transaction.findByIdAndUpdate(id, { ...req.body })
+    await Account.findByIdAndUpdate(id, { ...req.body })
     res.redirect('')
   })
 )
 
-router.delete('/transaction/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params
-  await Transaction.findByIdAndDelete(id)
+  await Account.findByIdAndDelete(id)
   res.redirect('')
 })
 
-export { router as transactionsRouter }
+export { router as accountsRouter }
