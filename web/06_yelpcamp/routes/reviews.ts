@@ -28,6 +28,7 @@ router.post(
       camp.reviews.push(review._id)
       await review.save()
       await camp.save()
+      req.flash('success', 'Successful!')
       res.redirect(`/campgrounds/${camp._id}`)
     } else {
       throw new ExpressError('Unable to find campground', 404)
@@ -44,6 +45,7 @@ router.delete(
     if (camp && rev) {
       await Campground.findByIdAndUpdate(id, { $pull: { reviews: revId } })
       await Review.findByIdAndDelete(revId)
+      req.flash('success', 'Successful!')
       res.redirect(`/campgrounds/${camp._id}`)
     } else {
       throw new ExpressError('Unable to delete review', 400)

@@ -1,12 +1,18 @@
 import express, { NextFunction, Request, Response } from 'express'
+import session, { SessionOptions } from 'express-session'
+import flash from 'connect-flash'
 import methodOverride from 'method-override'
-import * as path from 'path'
-import * as mg from 'mongoose'
+import path from 'path'
+import mg from 'mongoose'
 import { ExpressError } from './utils/ExpressError'
 import { campgroundsRouter } from './routes/campgrounds'
 import { reviewsRouter } from './routes/reviews'
 // @ts-ignore
 import engine from 'ejs-mate'
+import passport from 'passport'
+import { Strategy as LocalStrategy } from 'passport-local'
+import { User } from './models/User'
+import { userRouter } from './routes/users'
 
 const WEB_PORT = 8080
 const WEB_HOST = '0.0.0.0'
@@ -30,8 +36,36 @@ app.use(express.json())
 app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname, 'public')))
 
+const sessionConfig: SessionOptions = {
+  secret: 'dfndy5783fherwuthv4ui94f5w4q9y574vv',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7, // a week in milliseconds
+    httpOnly: true,
+  },
+}
+
+app.use(session(sessionConfig))
+app.use(flash())
+app.use(passport.initialize())
+app.use(passport.session())
+
+passport.use(new LocalStrategy(User.authenticate()))
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
+
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user
+  res.locals.success = req.flash('success')
+  res.locals.error = req.flash('error')
+
+  next()
+})
+
 app.use('/campgrounds', campgroundsRouter)
 app.use('/campgrounds/:id/reviews', reviewsRouter)
+app.use('/', userRouter)
 
 app.all('*', (_, __, next) => {
   next(new ExpressError('Page Not Found', 404))
