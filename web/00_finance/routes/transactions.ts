@@ -6,7 +6,7 @@ import { ExpressError } from '../utils/ExpressError'
 
 const router = express.Router({})
 
-const validateSchema = (req: Request, _: Response, next: NextFunction) => {
+const validateTransaction = (req: Request, _: Response, next: NextFunction) => {
   const { error } = transactionsSchema.validate(req.body)
   if (error) {
     const msg = error.details.map((el) => el.message).join(',')
@@ -33,34 +33,45 @@ router.get('/:id', async (req, res) => {
 
 router.post(
   '/',
-  validateSchema,
+  validateTransaction,
   errorHandler(async (req: Request, res: Response, _: NextFunction) => {
     const transaction = new Transaction({ ...req.body })
     await transaction.save()
-    res.redirect('')
+    req.flash('success', 'Transaction created successfully')
+    res.redirect(`transactions/${transaction._id}`)
   })
 )
 
 router.get('/:id/edit', async (req, res) => {
   const { id } = req.params
   const transaction = await Transaction.findById(id)
+  if (!transaction) {
+    req.flash('error', 'Could not find transaction')
+  }
+
   res.render('transactions/edit', { transaction })
 })
 
 router.patch(
   '/:id',
-  validateSchema,
+  validateTransaction,
   errorHandler(async (req, res) => {
     const { id } = req.params
-    await Transaction.findByIdAndUpdate(id, { ...req.body })
-    res.redirect('')
+    const transaction = await Transaction.findByIdAndUpdate(id, { ...req.body })
+    if (!transaction) {
+      req.flash('error', 'Could not update transaction')
+    }
+    res.redirect(`transactions/${id}`)
   })
 )
 
 router.delete('/transaction/:id', async (req, res) => {
   const { id } = req.params
-  await Transaction.findByIdAndDelete(id)
-  res.redirect('')
+  const transaction = await Transaction.findByIdAndDelete(id)
+  if (!transaction) {
+    req.flash('error', 'Could not delete transaction')
+  }
+  res.redirect('transactions')
 })
 
 export { router as transactionsRouter }
