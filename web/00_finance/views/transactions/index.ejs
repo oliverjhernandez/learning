@@ -2,13 +2,26 @@
 <h1>Transactions</h1>
 <ul>
   <% for (const tr of transactions) {%>
+    <% 
+        const day = tr.date.getDate().toString().padStart(2, '0');
+        const month = (tr.date.getMonth() + 1).toString().padStart(2, '0');
+        const year = tr.date.getFullYear();
+    %>
     <div class="card my-3">
-      <h5 class="card-header"><%=tr.description%></h5>
+      <h6 class="card-header"><%= `${day}/${month}/${year}` %></h6>
       <div class="card-body row">
         <div class="col">
-          <h5 class="card-title d-inline"><%=tr.type%></h5>
-          <p class="card-text d-inline"><%= tr.amount %> </p>
+          <h7 class="card-title d-inline"><%=tr.description%></h7>
         </div>
+      <div class="col">
+        <span class="badge bg-primary">Tag</span>
+      </div>
+      <div class="col">
+        <span class="badge bg-light text-dark">COP</span>
+      </div>
+      <div class="col">
+        <span class="card-text d-inline text-center">$ <%= tr.amount %> </span>
+      </div>
         <div class="col-auto">
           <a href="/transactions/<%= tr._id%>" class="btn btn-primary d-inline">Details</a>
         </div>

@@ -16,8 +16,25 @@ const validateTransaction = (req: Request, _: Response, next: NextFunction) => {
   }
 }
 
+const currentDate = new Date()
+const firstDayOfMonth = new Date(
+  currentDate.getFullYear(),
+  currentDate.getMonth(),
+  1
+)
+const lastDayOfMonth = new Date(
+  currentDate.getFullYear(),
+  currentDate.getMonth() + 1,
+  0
+)
+
 router.get('/', async (_, res) => {
-  const transactions = await Transaction.find()
+  const transactions = await Transaction.find({
+    date: { $gte: firstDayOfMonth, $lt: lastDayOfMonth },
+  })
+  transactions.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
   res.render('transactions/index', { transactions })
 })
 

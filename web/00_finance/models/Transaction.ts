@@ -1,7 +1,7 @@
 import { Document, Schema, model } from 'mongoose'
 
 interface ITransaction extends Document {
-  name: string
+  description: string
   date: Date
   accountId: Schema.Types.ObjectId // TODO: maybe a better type?
   amount: number
@@ -14,7 +14,7 @@ interface ITransaction extends Document {
 
 const TransactionSchema = new Schema(
   {
-    name: { type: String, required: true },
+    description: { type: String, required: true },
     date: { type: Date, required: true },
     accountId: { type: Schema.Types.ObjectId, required: true },
     amount: { type: Number, required: true },
