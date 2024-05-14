@@ -6,7 +6,7 @@ import (
 	"flag"
 	"log"
 
-	api "hotel/api/handlers"
+	"hotel/api"
 	"hotel/db"
 
 	"github.com/gofiber/fiber/v2"
@@ -46,8 +46,6 @@ func main() {
 	app := fiber.New(config)
 	apiv1 := app.Group("/api/v1")
 
-	app.Get("/foo", handleFoo)
-
 	// User initialization
 	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
 
@@ -55,8 +53,4 @@ func main() {
 	apiv1.Get("/user/:id", userHandler.HandleGetUser)
 
 	app.Listen(*listenAddr)
-}
-
-func handleFoo(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"msg": "foo endpoint"})
 }
