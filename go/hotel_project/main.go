@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"log"
 
@@ -14,21 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Create a new fiber instance with custom config
 var config = fiber.Config{
-	// Override default error handler
 	ErrorHandler: func(ctx *fiber.Ctx, err error) error {
-		// Status code defaults to 500
-		code := fiber.StatusInternalServerError
-
-		// Retrieve the custom status code if it's a *fiber.Error
-		var e *fiber.Error
-		if errors.As(err, &e) {
-			code = e.Code
-		}
-
-		// Send custom error page
-		return ctx.JSON(map[string]string{"error": err.Error(), "code": string(code)})
+		return ctx.JSON(map[string]string{"error": err.Error()})
 	},
 }
 
