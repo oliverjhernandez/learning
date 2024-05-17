@@ -41,8 +41,9 @@ func main() {
 	// Handlers
 	txHandler := api.NewTransactionHandler(txStore)
 
-	appv1.Get("/transaction", txHandler.HandlerTransactions)
-	appv1.Get("/transaction/:id", txHandler.HandlerTransaction)
+	appv1.Get("/transaction", txHandler.HandlerGetTransactions)
+	appv1.Get("/transaction/:id", txHandler.HandlerGetTransaction)
+	appv1.Post("/transaction", txHandler.HandlerPostTransaction)
 
 	app.Listen(*listenAddr)
 }
