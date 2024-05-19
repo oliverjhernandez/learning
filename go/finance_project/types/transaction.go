@@ -69,11 +69,17 @@ type TransactionParams struct {
 }
 
 type Transaction struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	TransactionParams
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Concept     string             `bson:"concept,omitempty" json:"concept,omitempty"`
+	Description string             `bson:"description,omitempty" json:"description,omitempty"`
+	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
+	Date        int64              `bson:"date,omitempty" json:"date,omitempty"`
+	Reference   string             `bson:"reference,omitempty" json:"reference,omitempty"`
+	Category    string             `bson:"category,omitempty" json:"category,omitempty"`
+	Account     string             `bson:"account,omitempty" json:"account,omitempty"`
 }
 
-func (tp TransactionParams) Validate() error {
+func (tp CreateTransactionParams) Validate() error {
 	if len(tp.Concept) < minConceptLen {
 		return fmt.Errorf("concept length should me larger than %d", minConceptLen)
 	}
@@ -97,16 +103,14 @@ func (tp TransactionParams) Validate() error {
 	return nil
 }
 
-func NewTransactionFromParams(p TransactionParams) (*Transaction, error) {
+func NewTransactionFromParams(p CreateTransactionParams) (*Transaction, error) {
 	return &Transaction{
-		TransactionParams: TransactionParams{
-			Concept:     p.Concept,
-			Description: p.Description,
-			Value:       p.Value,
-			Date:        p.Date,
-			Reference:   p.Reference,
-			Category:    p.Category,
-			Account:     p.Account,
-		},
+		Concept:     p.Concept,
+		Description: p.Description,
+		Value:       p.Value,
+		Date:        p.Date,
+		Reference:   p.Reference,
+		Category:    p.Category,
+		Account:     p.Account,
 	}, nil
 }

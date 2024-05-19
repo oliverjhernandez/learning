@@ -29,7 +29,7 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 }
 
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
-	var params types.TransactionParams
+	var params types.CreateTransactionParams
 	if err := c.BodyParser(&params); err != nil {
 		return err
 	}
