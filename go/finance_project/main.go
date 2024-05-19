@@ -41,9 +41,12 @@ func main() {
 	// Handlers
 	txHandler := api.NewTransactionHandler(txStore)
 
+	// Transaction CRUD Endpoints
 	appv1.Get("/transaction", txHandler.HandlerGetTransactions)
 	appv1.Get("/transaction/:id", txHandler.HandlerGetTransaction)
 	appv1.Post("/transaction", txHandler.HandlerPostTransaction)
+	appv1.Delete("/transaction/:id", txHandler.HandlerDeleteTransaction)
+	appv1.Patch("/transaction/:id", txHandler.HandlerUpdateTransaction)
 
 	app.Listen(*listenAddr)
 }

@@ -17,6 +17,8 @@ const (
 type TransactionStore interface {
 	GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error)
 	InsertTransaction(ctx context.Context, tx *types.Transaction) (*types.Transaction, error)
+	UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error
+	DeleteTransaction(ctx context.Context, id string) error
 }
 
 type MongoTransactionStore struct {
@@ -26,15 +28,13 @@ type MongoTransactionStore struct {
 }
 
 func (ts *MongoTransactionStore) GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error) {
-	var c context.Context
-
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
 	var tx types.Transaction
-	if err := ts.collection.FindOne(c, bson.M{"_id": oid}).Decode(tx); err != nil {
+	if err := ts.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(tx); err != nil {
 		return nil, err
 	}
 
@@ -50,10 +50,37 @@ func (ts *MongoTransactionStore) InsertTransaction(ctx context.Context, tx *type
 	return tx, nil
 }
 
-func NewMongoTransactionStore(c *mongo.Client) *MongoTransactionStore {
+func (ts *MongoTransactionStore) DeleteTransaction(ctx context.Context, id string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	_, err = ts.collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ts *MongoTransactionStore) UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error {
+	values := bson.D{
+		{
+			"$set", params.ToBSON(),
+		},
+	}
+
+	_, err := ts.collection.UpdateOne(ctx, filter, values)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewMongoTransactionStore(mc *mongo.Client) *MongoTransactionStore {
 	return &MongoTransactionStore{
-		client:     c,
+		client:     mc,
 		dbname:     DBNAME,
-		collection: c.Database(DBNAME).Collection(TransactionCollection),
+		collection: mc.Database(DBNAME).Collection(TransactionCollection),
 	}
 }

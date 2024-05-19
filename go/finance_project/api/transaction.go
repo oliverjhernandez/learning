@@ -1,14 +1,31 @@
 package api
 
 import (
+	"fmt"
+
 	"finance/db"
 	"finance/types"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TransactionHandler struct {
 	transactionStore db.TransactionStore
+}
+
+func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
+	fmt.Printf("Context: %+v", c.Context())
+	return c.JSON(map[string]string{"data": "many transactions"})
+}
+
+func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
+	tx, err := th.transactionStore.GetTransactionByID(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+	return c.JSON(tx)
 }
 
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
@@ -31,16 +48,36 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	return c.JSON(res)
 }
 
-func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"data": "many transactions"})
-}
+func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
+	var (
+		params types.UpdateTransactionParams
+		userID = c.Params("id")
+	)
 
-func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
-	tx, err := th.transactionStore.GetTransactionByID(c.Context(), c.Params("id"))
+	if err := c.BodyParser(&params); err != nil {
+		return err
+	}
+
+	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return err
 	}
-	return c.JSON(tx)
+
+	filter := bson.M{"_id": oid}
+
+	if err = th.transactionStore.UpdateTransaction(c.Context(), filter, &params); err != nil {
+		return err
+	}
+	return c.JSON(map[string]string{"msg": "updated"})
+}
+
+func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
+	id := c.Params("id")
+	err := th.transactionStore.DeleteTransaction(c.Context(), id)
+	if err != nil {
+		return err
+	}
+	return c.JSON(map[string]string{"msg": "deleted"})
 }
 
 func NewTransactionHandler(transactionStore db.TransactionStore) *TransactionHandler {

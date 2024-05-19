@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -15,6 +16,47 @@ const (
 	minReferenteLen   = 1
 	minAccountLen     = 3
 )
+
+type UpdateTransactionParams struct {
+	Concept     string `json:"concept"`
+	Description string `json:"description"`
+	Value       int32  `json:"value"`
+	Date        int64  `json:"date"`
+	Reference   string `json:"reference"`
+	Category    string `bson:"category" json:"category"`
+	Account     string `bson:"account" json:"account"`
+}
+
+func (up UpdateTransactionParams) ToBSON() bson.M {
+	m := bson.M{}
+	if len(up.Concept) > 0 {
+		m["Concept"] = up.Concept
+	} else if len(up.Description) > 0 {
+		m["Description"] = up.Description
+	} else if up.Value > 0 {
+		m["Value"] = up.Value
+	} else if up.Date > 0 {
+		m["Date"] = up.Date
+	} else if len(up.Reference) > 0 {
+		m["Reference"] = up.Reference
+	} else if len(up.Category) > 0 {
+		m["Category"] = up.Category
+	} else if len(up.Account) > 0 {
+		m["Account"] = up.Account
+	}
+
+	return m
+}
+
+type CreateTransactionParams struct {
+	Concept     string `json:"concept"`
+	Description string `json:"description"`
+	Value       int32  `json:"value"`
+	Date        int64  `json:"date"`
+	Reference   string `json:"reference"`
+	Category    string `bson:"category" json:"category"`
+	Account     string `bson:"account" json:"account"`
+}
 
 type TransactionParams struct {
 	Concept     string `json:"concept"`
