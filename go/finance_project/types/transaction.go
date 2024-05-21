@@ -53,8 +53,8 @@ type CreateTransactionParams struct {
 	Description string `json:"description"`
 	Value       int32  `json:"value"`
 	Date        int64  `json:"date"`
-	Reference   string `json:"reference"`
-	Category    string `bson:"category" json:"category"`
+	Status      string `json:"status"`
+	Currency    string `json:"currency"`
 	Account     string `bson:"account" json:"account"`
 }
 
@@ -63,8 +63,8 @@ type TransactionParams struct {
 	Description string `json:"description"`
 	Value       int32  `json:"value"`
 	Date        int64  `json:"date"`
-	Reference   string `json:"reference"`
-	Category    string `bson:"category" json:"category"`
+	Status      string `json:"status"`
+	Currency    string `json:"currency"`
 	Account     string `bson:"account" json:"account"`
 }
 
@@ -74,8 +74,8 @@ type Transaction struct {
 	Description string             `bson:"description,omitempty" json:"description,omitempty"`
 	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
 	Date        int64              `bson:"date,omitempty" json:"date,omitempty"`
-	Reference   string             `bson:"reference,omitempty" json:"reference,omitempty"`
-	Category    string             `bson:"category,omitempty" json:"category,omitempty"`
+	Status      string             `bson:"status,omitempty" json:"status,omitempty"`
+	Currency    string             `bson:"currency,omitempty" json:"currency,omitempty"`
 	Account     string             `bson:"account,omitempty" json:"account,omitempty"`
 }
 
@@ -109,8 +109,8 @@ func NewTransactionFromParams(p CreateTransactionParams) (*Transaction, error) {
 		Description: p.Description,
 		Value:       p.Value,
 		Date:        p.Date,
-		Reference:   p.Reference,
-		Category:    p.Category,
+		Status:      p.Status,
+		Currency:    p.Currency,
 		Account:     p.Account,
 	}, nil
 }

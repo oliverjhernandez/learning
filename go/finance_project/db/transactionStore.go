@@ -14,7 +14,13 @@ const (
 	TransactionCollection = "transaction"
 )
 
+type Dropper interface {
+	Drop(ctx context.Context) error
+}
+
 type TransactionStore interface {
+	Dropper
+
 	GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error)
 	InsertTransaction(ctx context.Context, tx *types.Transaction) (*types.Transaction, error)
 	UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error
@@ -25,6 +31,10 @@ type MongoTransactionStore struct {
 	client     *mongo.Client
 	dbname     string
 	collection *mongo.Collection
+}
+
+func (ts *MongoTransactionStore) Drop(ctx context.Context) error {
+	return ts.collection.Drop(ctx)
 }
 
 func (ts *MongoTransactionStore) GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error) {
@@ -77,10 +87,10 @@ func (ts *MongoTransactionStore) UpdateTransaction(ctx context.Context, filter b
 	return nil
 }
 
-func NewMongoTransactionStore(mc *mongo.Client) *MongoTransactionStore {
+func NewMongoTransactionStore(mc *mongo.Client, dbname string) *MongoTransactionStore {
 	return &MongoTransactionStore{
 		client:     mc,
-		dbname:     DBNAME,
-		collection: mc.Database(DBNAME).Collection(TransactionCollection),
+		dbname:     dbname,
+		collection: mc.Database(dbname).Collection(TransactionCollection),
 	}
 }

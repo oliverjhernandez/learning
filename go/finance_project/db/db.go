@@ -1,5 +1,6 @@
 package db
 
 const (
-	DBNAME = "finance"
+	DBNAME  = "finance"
+	TDBNAME = "test-finance"
 )
