@@ -1,7 +1,8 @@
 package db
 
 const (
-	DBNAME = "hotel-reservation"
+	DBNAME  = "hotel-reservation"
+	TDBNAME = "test-hotel-reservation"
 )
 
 // DEPRECATED

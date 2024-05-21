@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"hotel/types"
 
@@ -14,7 +15,13 @@ const (
 	userCollection = "users"
 )
 
+type Dropper interface {
+	Drop(ctx context.Context) error
+}
+
 type UserStore interface {
+	Dropper
+
 	GetUserByID(context.Context, string) (*types.User, error)
 	GetUsers(context.Context) ([]*types.User, error)
 	InsertUser(context.Context, *types.User) (*types.User, error)
@@ -26,6 +33,11 @@ type MongoUserStore struct {
 	client     *mongo.Client
 	dbname     string
 	collection *mongo.Collection
+}
+
+func (s *MongoUserStore) Drop(ctx context.Context) error {
+	fmt.Println("...dropping user collection")
+	return s.collection.Drop(ctx)
 }
 
 func (s *MongoUserStore) GetUserByID(ctx context.Context, id string) (*types.User, error) {
@@ -88,10 +100,10 @@ func (s *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params t
 	return nil
 }
 
-func NewMongoUserStore(c *mongo.Client) *MongoUserStore {
+func NewMongoUserStore(c *mongo.Client, dbname string) *MongoUserStore {
 	return &MongoUserStore{
 		client:     c,
-		dbname:     DBNAME,
-		collection: c.Database(DBNAME).Collection(userCollection),
+		dbname:     dbname,
+		collection: c.Database(dbname).Collection(userCollection),
 	}
 }

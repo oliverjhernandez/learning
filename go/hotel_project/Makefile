@@ -4,5 +4,5 @@ build:
 run: build
 	@./bin/api
 
-rest:
+test:
 	@go test -v ./...
