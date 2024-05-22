@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TransactionCollection = "transaction"
+	transactionCollection = "transactions"
 )
 
 type Dropper interface {
@@ -44,7 +44,7 @@ func (ts *MongoTransactionStore) GetTransactionByID(ctx context.Context, id stri
 	}
 
 	var tx types.Transaction
-	if err := ts.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(tx); err != nil {
+	if err := ts.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&tx); err != nil {
 		return nil, err
 	}
 
@@ -91,6 +91,6 @@ func NewMongoTransactionStore(mc *mongo.Client, dbname string) *MongoTransaction
 	return &MongoTransactionStore{
 		client:     mc,
 		dbname:     dbname,
-		collection: mc.Database(dbname).Collection(TransactionCollection),
+		collection: mc.Database(dbname).Collection(transactionCollection),
 	}
 }
