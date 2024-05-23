@@ -38,8 +38,10 @@ func main() {
 
 	// Stores
 	txStore := db.NewMongoTransactionStore(client, db.DBNAME)
+	userStore := db.NewMongoUserStore(client, db.DBNAME)
 	// Handlers
 	txHandler := api.NewTransactionHandler(txStore)
+	userHandler := api.NewUserHandler(userStore)
 
 	// Transaction CRUD Endpoints
 	appv1.Get("/transaction", txHandler.HandlerGetTransactions)
@@ -47,6 +49,13 @@ func main() {
 	appv1.Post("/transaction", txHandler.HandlerPostTransaction)
 	appv1.Delete("/transaction/:id", txHandler.HandlerDeleteTransaction)
 	appv1.Patch("/transaction/:id", txHandler.HandlerUpdateTransaction)
+
+	// User CRUD Endpoints
+	appv1.Get("/user", userHandler.HandlerGetUsers)
+	appv1.Get("/user/:id", userHandler.HandlerGetUser)
+	appv1.Post("/user", userHandler.HandlerPostUser)
+	appv1.Delete("/user/:id", userHandler.HandlerDeleteUser)
+	appv1.Patch("/user/:id", userHandler.HandlerUpdateUser)
 
 	app.Listen(*listenAddr)
 }

@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	bcryptCost        = 12
 	minConceptLen     = 5
 	minDescriptionLen = 1
 	minValue          = 1
