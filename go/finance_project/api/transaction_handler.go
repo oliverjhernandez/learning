@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"finance/db"
 	"finance/types"
 
@@ -16,8 +14,11 @@ type TransactionHandler struct {
 }
 
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
-	fmt.Printf("Context: %+v", c.Context())
-	return c.JSON(map[string]string{"data": "many transactions"})
+	txs, err := th.transactionStore.GetTransactions(c.Context())
+	if err != nil {
+		return nil
+	}
+	return c.JSON(&txs)
 }
 
 func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
@@ -73,8 +74,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 
 func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
 	id := c.Params("id")
-	err := th.transactionStore.DeleteTransaction(c.Context(), id)
-	if err != nil {
+	if err := th.transactionStore.DeleteTransaction(c.Context(), id); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"msg": "deleted"})

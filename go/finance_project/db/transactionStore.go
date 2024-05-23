@@ -21,6 +21,7 @@ type Dropper interface {
 type TransactionStore interface {
 	Dropper
 
+	GetTransactions(ctx context.Context) ([]*types.Transaction, error)
 	GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error)
 	InsertTransaction(ctx context.Context, tx *types.Transaction) (*types.Transaction, error)
 	UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error
@@ -35,6 +36,20 @@ type MongoTransactionStore struct {
 
 func (ts *MongoTransactionStore) Drop(ctx context.Context) error {
 	return ts.collection.Drop(ctx)
+}
+
+func (ts *MongoTransactionStore) GetTransactions(ctx context.Context) ([]*types.Transaction, error) {
+	cur, err := ts.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	var txs []*types.Transaction
+	if err := cur.All(ctx, &txs); err != nil {
+		return nil, err
+	}
+
+	return txs, nil
 }
 
 func (ts *MongoTransactionStore) GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error) {
