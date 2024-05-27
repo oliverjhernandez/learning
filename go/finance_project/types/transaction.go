@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,18 +13,105 @@ const (
 	minConceptLen     = 5
 	minDescriptionLen = 1
 	minValue          = 1
-	minReferenteLen   = 1
-	minAccountLen     = 3
 )
 
+type Account int
+
+const (
+	_ = iota
+	SAVINGS
+	CHECKINGS
+	LOAN
+)
+
+func (a Account) String() string {
+	switch a {
+	case SAVINGS:
+		return "SAVINGS"
+	case CHECKINGS:
+		return "CHECKINGS"
+	case LOAN:
+		return "LOAN"
+	default:
+		return "Unknown"
+
+	}
+}
+
+type Currency int
+
+const (
+	_ = iota
+	USD
+	COP
+)
+
+func (c Currency) String() string {
+	switch c {
+	case USD:
+		return "USD"
+	case COP:
+		return "COP"
+	default:
+		return "Unknown"
+
+	}
+}
+
+type Relevance int
+
+const (
+	_ = iota
+	Essential
+	Important
+	Optional
+)
+
+func (r Relevance) String() string {
+	switch r {
+	case Essential:
+		return "Essential"
+	case Important:
+		return "Important"
+	case Optional:
+		return "Optional"
+	default:
+		return "Unknown"
+
+	}
+}
+
+func (r Relevance) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.String())
+}
+
+func (r *Relevance) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	switch s {
+	case "Essential":
+		*r = Essential
+	case "Important":
+		*r = Important
+	case "Optional":
+		*r = Optional
+	default:
+		return fmt.Errorf("invalid relevance value: %s", s)
+	}
+	return nil
+}
+
 type UpdateTransactionParams struct {
-	Concept     string `json:"concept"`
-	Description string `json:"description"`
-	Value       int32  `json:"value"`
-	Date        int64  `json:"date"`
-	Reference   string `json:"reference"`
-	Category    string `bson:"category" json:"category"`
-	Account     string `bson:"account" json:"account"`
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Value       int32     `json:"value"`
+	Date        int64     `json:"date"`
+	Relevance   Relevance `json:"Relevance"`
+	Currency    Currency  `json:"currency"`
+	Account     Account   `bson:"account" json:"account"`
 }
 
 func (up UpdateTransactionParams) ToBSON() bson.M {
@@ -36,35 +124,21 @@ func (up UpdateTransactionParams) ToBSON() bson.M {
 		m["Value"] = up.Value
 	} else if up.Date > 0 {
 		m["Date"] = up.Date
-	} else if len(up.Reference) > 0 {
-		m["Reference"] = up.Reference
-	} else if len(up.Category) > 0 {
-		m["Category"] = up.Category
-	} else if len(up.Account) > 0 {
-		m["Account"] = up.Account
 	}
 
 	return m
 }
 
-type CreateTransactionParams struct {
-	Concept     string `json:"concept"`
-	Description string `json:"description"`
-	Value       int32  `json:"value"`
-	Date        int64  `json:"date"`
-	Status      string `json:"status"`
-	Currency    string `json:"currency"`
-	Account     string `bson:"account" json:"account"`
-}
+type Level string
 
-type TransactionParams struct {
-	Concept     string `json:"concept"`
-	Description string `json:"description"`
-	Value       int32  `json:"value"`
-	Date        int64  `json:"date"`
-	Status      string `json:"status"`
-	Currency    string `json:"currency"`
-	Account     string `bson:"account" json:"account"`
+type CreateTransactionParams struct {
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Value       int32     `json:"value"`
+	Date        int64     `json:"date"`
+	Relevance   Relevance `json:"Relevance"`
+	Currency    Currency  `json:"currency"`
+	Account     Account   `bson:"account" json:"account"`
 }
 
 type Transaction struct {
@@ -73,9 +147,9 @@ type Transaction struct {
 	Description string             `bson:"description,omitempty" json:"description,omitempty"`
 	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
 	Date        int64              `bson:"date,omitempty" json:"date,omitempty"`
-	Status      string             `bson:"status,omitempty" json:"status,omitempty"`
-	Currency    string             `bson:"currency,omitempty" json:"currency,omitempty"`
-	Account     string             `bson:"account,omitempty" json:"account,omitempty"`
+	Relevance   Relevance          `bson:"Relevance,omitempty" json:"Relevance,omitempty"`
+	Currency    Currency           `bson:"currency,omitempty" json:"currency,omitempty"`
+	Account     Account            `bson:"account,omitempty" json:"account,omitempty"`
 }
 
 func (tp CreateTransactionParams) Validate() error {
@@ -95,10 +169,6 @@ func (tp CreateTransactionParams) Validate() error {
 		return fmt.Errorf("date should me smaller than current date")
 	}
 
-	if len(tp.Account) < minAccountLen {
-		return fmt.Errorf("account length should me larger than %d", minAccountLen)
-	}
-
 	return nil
 }
 
@@ -108,7 +178,7 @@ func NewTransactionFromParams(p CreateTransactionParams) (*Transaction, error) {
 		Description: p.Description,
 		Value:       p.Value,
 		Date:        p.Date,
-		Status:      p.Status,
+		Relevance:   p.Relevance,
 		Currency:    p.Currency,
 		Account:     p.Account,
 	}, nil
