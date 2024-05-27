@@ -28,7 +28,6 @@ func main() {
 		panic(err)
 	}
 
-	listenAddr := flag.String("listenAddr", ":3000", "The listen address of the API server")
 	app := fiber.New(config)
 	appv1 := app.Group("/v1")
 
@@ -36,12 +35,15 @@ func main() {
 		return c.SendString("Hello, World!")
 	})
 
-	// Stores
-	txStore := db.NewMongoTransactionStore(client, db.DBNAME)
-	userStore := db.NewMongoUserStore(client, db.DBNAME)
-	// Handlers
-	txHandler := api.NewTransactionHandler(txStore)
-	userHandler := api.NewUserHandler(userStore)
+	var (
+		listenAddr = flag.String("listenAddr", ":3000", "The listen address of the API server")
+		// Stores
+		txStore   = db.NewMongoTransactionStore(client, db.DBNAME)
+		userStore = db.NewMongoUserStore(client, db.DBNAME)
+		// Handlers
+		txHandler   = api.NewTransactionHandler(txStore)
+		userHandler = api.NewUserHandler(userStore)
+	)
 
 	// Transaction CRUD Endpoints
 	appv1.Get("/transaction", txHandler.HandlerGetTransactions)
