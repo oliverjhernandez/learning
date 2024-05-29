@@ -1,0 +1,90 @@
+package api
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"time"
+
+	"hotel/db"
+	"hotel/types"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type AuthHandler struct {
+	userStore db.UserStore
+}
+
+func NewAuthHandler(userStore db.UserStore) *AuthHandler {
+	return &AuthHandler{
+		userStore: userStore,
+	}
+}
+
+type AuthParams struct {
+	Email  string `json:"email"`
+	Passwd string `json:"passwd"`
+}
+
+type AuthResponse struct {
+	User  *types.User `json:"user"`
+	Token string      `json:"token"`
+}
+
+// A Handler should only do:
+// - Serialization of the incoming req
+// - data fetching using stores
+// - call some business logic (always call, never do)
+// - return data back to the user
+
+func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
+	var params AuthParams
+	if err := c.BodyParser(&params); err != nil {
+		return err
+	}
+
+	user, err := ah.userStore.GetUserByEmail(c.Context(), params.Email)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return fmt.Errorf("Invalid credentials")
+		}
+		return err
+	}
+
+	if !types.IsValidPasswd(user.EncryptedPasswd, params.Passwd) {
+		return fmt.Errorf("incalid credentials")
+	}
+
+	// TODO: SHould be better to send this in http headers
+	resp := AuthResponse{
+		User:  user,
+		Token: createTokenFromUser(user),
+	}
+
+	fmt.Printf("Authenticated -> ", user.FirstName)
+	return c.JSON(resp)
+}
+
+func createTokenFromUser(user *types.User) string {
+	now := time.Now()
+	expires := now.Add(time.Hour * 4).Unix()
+	// TODO: Apparently there are standard claim names
+	// Let's investigate that and use it
+	claims := jwt.MapClaims{
+		"id":      user.ID,
+		"email":   user.Email,
+		"expires": expires,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	secret := os.Getenv("JWT_SECRET")
+	tokenStr, err := token.SignedString([]byte(secret))
+	if err != nil {
+		fmt.Println("failed to sign token with secret", err)
+	}
+
+	return tokenStr
+}

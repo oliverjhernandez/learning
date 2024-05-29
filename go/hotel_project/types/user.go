@@ -69,6 +69,10 @@ type User struct {
 	EncryptedPasswd string             `bson:"encryptedPasswd" json:"-"`
 }
 
+func IsValidPasswd(encpw, pw string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(encpw), []byte(pw)) == nil
+}
+
 func NewUserFromParams(params CreateUserParams) (*User, error) {
 	encpw, err := bcrypt.GenerateFromPassword([]byte(params.Passwd), bcryptCost)
 	if err != nil {
