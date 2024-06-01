@@ -37,7 +37,7 @@ func (rs *MongoRoomStore) InsertRoom(ctx context.Context, room *types.Room) (*ty
 	// update hotel with this room id
 	filter := bson.M{"_id": room.HotelID}
 	update := bson.M{"$push": bson.M{"rooms": room.ID}}
-	if err := rs.HotelStore.UpdateHotel(ctx, filter, update); err != nil {
+	if err := rs.UpdateHotel(ctx, filter, update); err != nil {
 		return nil, err
 	}
 
