@@ -5,30 +5,42 @@ import (
 	"os"
 	"time"
 
+	"hotel/db"
+
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func JWTAuthentication(c *fiber.Ctx) error {
-	fmt.Println("-- JWT auth")
+func JWTAuthentication(userStore db.UserStore) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		fmt.Println("-- JWT auth")
 
-	token := c.Get("X-Api-Token")
-	if len(token) == 0 {
-		return fmt.Errorf("Unauthorized")
-	}
-	claims, err := validateToken(token)
-	if err != nil {
-		return err
-	}
-	expiresFloat := claims["expires"].(float64)
-	expires := int64(expiresFloat)
+		token := c.Get("X-Api-Token")
+		if len(token) == 0 {
+			return fmt.Errorf("Unauthorized")
+		}
+		claims, err := validateToken(token)
+		if err != nil {
+			return err
+		}
 
-	if time.Now().Unix() > expires {
-		return fmt.Errorf("token expired")
-	}
+		// Check token expiration
+		expiresFloat := claims["expires"].(float64)
+		expires := int64(expiresFloat)
+		if time.Now().Unix() > expires {
+			return fmt.Errorf("token expired")
+		}
 
-	return c.Next()
+		userID := claims["id"].(string)
+		user, err := userStore.GetUserByID(c.Context(), userID)
+		if err != nil {
+			return fmt.Errorf("Unauthorized")
+		}
+		c.Context().SetUserValue("user", user)
+
+		return c.Next()
+	}
 }
 
 func validateToken(tokenStr string) (jwt.MapClaims, error) {
