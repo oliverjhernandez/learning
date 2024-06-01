@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -34,6 +35,18 @@ type AuthResponse struct {
 	Token string      `json:"token"`
 }
 
+type genericResponse struct {
+	Type string `json:"type"`
+	Msg  string `json:"msg"`
+}
+
+func invalidCredentials(c *fiber.Ctx) error {
+	return c.Status(http.StatusBadRequest).JSON(genericResponse{
+		Type: "error",
+		Msg:  "invalid credentials",
+	})
+}
+
 // A Handler should only do:
 // - Serialization of the incoming req
 // - data fetching using stores
@@ -49,22 +62,22 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	user, err := ah.userStore.GetUserByEmail(c.Context(), params.Email)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return fmt.Errorf("Invalid credentials")
+			return invalidCredentials(c)
 		}
 		return err
 	}
 
 	if !types.IsValidPasswd(user.EncryptedPasswd, params.Passwd) {
-		return fmt.Errorf("incalid credentials")
+		return invalidCredentials(c)
 	}
 
-	// TODO: SHould be better to send this in http headers
+	// TODO: Should be better to send this in HTTP headers
 	resp := AuthResponse{
 		User:  user,
 		Token: createTokenFromUser(user),
 	}
 
-	fmt.Printf("Authenticated -> ", user.FirstName)
+	fmt.Println("Authenticated -> ", user.FirstName)
 	return c.JSON(resp)
 }
 
