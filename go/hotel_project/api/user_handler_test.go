@@ -18,11 +18,11 @@ import (
 const testDbUri = "mongodb://localhost:27017"
 
 type testDB struct {
-	db.UserStore
+	*db.Store
 }
 
 func (tdb *testDB) tearDown(t *testing.T) {
-	if err := tdb.UserStore.Drop(context.TODO()); err != nil {
+	if err := tdb.User.Drop(context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -33,8 +33,12 @@ func setup(t *testing.T) *testDB {
 		t.Fatal(err)
 	}
 
+	store := &db.Store{
+		User: db.NewMongoUserStore(client, db.TDBNAME),
+	}
+
 	return &testDB{
-		UserStore: db.NewMongoUserStore(client, db.TDBNAME),
+		Store: store,
 	}
 }
 
@@ -43,7 +47,7 @@ func TestPostUser(t *testing.T) {
 	defer tdb.tearDown(t)
 
 	app := fiber.New()
-	userHandler := NewUserHandler(tdb.UserStore)
+	userHandler := NewUserHandler(tdb.Store)
 	app.Post("/", userHandler.HandlePostUser)
 
 	params := types.CreateUserParams{
