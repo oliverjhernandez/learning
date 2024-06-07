@@ -16,7 +16,7 @@ type TransactionHandler struct {
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 	txs, err := th.transactionStore.GetTransactions(c.Context())
 	if err != nil {
-		return nil
+		return ErrNotFound()
 	}
 	return c.JSON(&txs)
 }
@@ -24,7 +24,7 @@ func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 	tx, err := th.transactionStore.GetTransactionByID(c.Context(), c.Params("id"))
 	if err != nil {
-		return err
+		return ErrNotFound()
 	}
 	return c.JSON(tx)
 }
@@ -32,10 +32,10 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	var params types.CreateTransactionParams
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return ErrInvalidReqBody()
 	}
 	if err := params.Validate(); err != nil {
-		return err
+		return ErrInvalidParams()
 	}
 
 	tx, err := types.NewTransactionFromParams(params)
@@ -56,12 +56,12 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return ErrInvalidReqBody()
 	}
 
 	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return ErrInvalidID()
 	}
 
 	filter := bson.M{"_id": oid}

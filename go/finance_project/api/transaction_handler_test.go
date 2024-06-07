@@ -76,9 +76,9 @@ func TestPostTx(t *testing.T) {
 		Description: "Castel D'Aiano",
 		Value:       2250000,
 		Date:        1716308030,
-		Status:      "Expendable",
-		Currency:    "COP",
-		Account:     "Savings",
+		Relevance:   1,
+		Currency:    types.COP,
+		Account:     types.SAVINGS,
 	}
 
 	resp, err := insertTestTx(app, params)
@@ -102,8 +102,8 @@ func TestPostTx(t *testing.T) {
 		t.Errorf("got %d but expected %d", resp.Date, params.Date)
 	}
 
-	if resp.Status != params.Status {
-		t.Errorf("got %s but expected %s", resp.Status, params.Status)
+	if resp.Relevance != params.Relevance {
+		t.Errorf("got %s but expected %s", resp.Relevance, params.Relevance)
 	}
 
 	if resp.Currency != params.Currency {
@@ -129,9 +129,9 @@ func TestGetTx(t *testing.T) {
 		Description: "Castel D'Aiano",
 		Value:       2250000,
 		Date:        1716308030,
-		Status:      "Expendable",
-		Currency:    "COP",
-		Account:     "Savings",
+		Relevance:   2,
+		Currency:    types.COP,
+		Account:     types.SAVINGS,
 	}
 
 	postTx, err := insertTestTx(app, params)
@@ -173,8 +173,8 @@ func TestGetTx(t *testing.T) {
 		t.Errorf("got %d but expected %d", getTx.Date, params.Date)
 	}
 
-	if getTx.Status != params.Status {
-		t.Errorf("got %s but expected %s", getTx.Status, params.Status)
+	if getTx.Relevance != params.Relevance {
+		t.Errorf("got %s but expected %s", getTx.Relevance, params.Relevance)
 	}
 
 	if getTx.Currency != params.Currency {
@@ -201,9 +201,9 @@ func TestDeleteTx(t *testing.T) {
 		Description: "Castel D'Aiano",
 		Value:       2250000,
 		Date:        1716308030,
-		Status:      "Expendable",
-		Currency:    "COP",
-		Account:     "Savings",
+		Relevance:   3,
+		Currency:    types.COP,
+		Account:     types.SAVINGS,
 	}
 
 	postTx, err := insertTestTx(app, params)
@@ -266,9 +266,9 @@ func TestUpdateTx(t *testing.T) {
 		Description: "Castel D'Aiano",
 		Value:       2250000,
 		Date:        1716308030,
-		Status:      "Expendable",
-		Currency:    "COP",
-		Account:     "Savings",
+		Relevance:   1,
+		Currency:    types.COP,
+		Account:     types.SAVINGS,
 	}
 
 	postTx, err := insertTestTx(app, params)
@@ -276,7 +276,7 @@ func TestUpdateTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	up := map[string]string{"account": "Checkings"}
+	up := map[string]any{"account": types.CHECKINGS}
 	b, _ := json.Marshal(up)
 
 	upReq := httptest.NewRequest("PATCH", "/"+postTx.ID.Hex(), bytes.NewReader(b))
