@@ -33,8 +33,8 @@ type UserStore interface {
 
 type MongoUserStore struct {
 	client     *mongo.Client
-	dbname     string
 	collection *mongo.Collection
+	dbname     string
 }
 
 func (s *MongoUserStore) Drop(ctx context.Context) error {
