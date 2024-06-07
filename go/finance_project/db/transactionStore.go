@@ -30,8 +30,8 @@ type TransactionStore interface {
 
 type MongoTransactionStore struct {
 	client     *mongo.Client
-	dbname     string
 	collection *mongo.Collection
+	dbname     string
 }
 
 func (ts *MongoTransactionStore) Drop(ctx context.Context) error {
@@ -89,8 +89,8 @@ func (ts *MongoTransactionStore) DeleteTransaction(ctx context.Context, id strin
 
 func (ts *MongoTransactionStore) UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error {
 	values := bson.D{
-		{
-			"$set", params.ToBSON(),
+		primitive.E{
+			Key: "$set", Value: params.ToBSON(),
 		},
 	}
 

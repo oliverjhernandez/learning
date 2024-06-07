@@ -24,8 +24,8 @@ type UserStore interface {
 
 type MongoUserStore struct {
 	client     *mongo.Client
-	dbname     string
 	collection *mongo.Collection
+	dbname     string
 }
 
 func (us *MongoUserStore) GetUsers(ctx context.Context) ([]*types.User, error) {
@@ -70,8 +70,8 @@ func (us *MongoUserStore) InsertUser(ctx context.Context, user *types.User) (*ty
 
 func (us *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params *types.UpdateUserParams) error {
 	values := bson.D{
-		{
-			"$set", params.ToBSON(),
+		primitive.E{
+			Key: "$set", Value: params.ToBSON(),
 		},
 	}
 	_, err := us.collection.UpdateOne(ctx, filter, values)
