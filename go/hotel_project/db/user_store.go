@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"hotel/types"
@@ -27,7 +28,7 @@ type UserStore interface {
 	GetUsers(context.Context) ([]*types.User, error)
 	InsertUser(context.Context, *types.User) (*types.User, error)
 	DeleteUser(context.Context, string) error
-	UpdateUser(ctx context.Context, filter bson.M, params types.UpdateUserParams) error
+	UpdateUser(ctx context.Context, filter Params, params types.UpdateUserParams) error
 }
 
 type MongoUserStore struct {
@@ -97,13 +98,29 @@ func (s *MongoUserStore) DeleteUser(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params types.UpdateUserParams) error {
-	values := bson.D{
-		primitive.E{
-			Key: "$set", Value: params.ToBSON(),
-		},
+func (s *MongoUserStore) UpdateUser(ctx context.Context, filter Params, params types.UpdateUserParams) error {
+	id, ok := filter["_id"]
+	if !ok {
+		return errors.New("missing _id in filter")
 	}
-	_, err := s.collection.UpdateOne(ctx, filter, values)
+
+	var oid primitive.ObjectID
+	switch v := id.(type) {
+	case string:
+		var err error
+		oid, err = primitive.ObjectIDFromHex(v)
+		if err != nil {
+			return err
+		}
+	case primitive.ObjectID:
+		oid = v
+	default:
+		return errors.New("invalid type for _id in filter")
+	}
+
+	filter["_id"] = oid
+	update := bson.M{"$set": params.ToBSON()}
+	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
