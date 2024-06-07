@@ -6,6 +6,8 @@ const (
 	TDBNAME = "test-hotel-reservation"
 )
 
+type Params map[string]any
+
 type Store struct {
 	User    UserStore
 	Hotel   HotelStore
