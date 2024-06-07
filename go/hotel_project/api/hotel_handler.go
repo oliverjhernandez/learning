@@ -20,7 +20,7 @@ type HotelQueryParms struct {
 func (hs *HotelHandler) HandlerGetHotels(c *fiber.Ctx) error {
 	var qparams HotelQueryParms
 	if err := c.QueryParser(&qparams); err != nil {
-		return err
+		return ErrInvalidID()
 	}
 
 	hotels, err := hs.store.Hotel.GetHotels(c.Context(), nil)
@@ -33,10 +33,14 @@ func (hs *HotelHandler) HandlerGetHotels(c *fiber.Ctx) error {
 
 func (hs *HotelHandler) HandlerGetHotel(c *fiber.Ctx) error {
 	id := c.Params("id")
-
-	hotel, err := hs.store.Hotel.GetHotelByID(c.Context(), id)
+	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return ErrInvalidID()
+	}
+
+	hotel, err := hs.store.Hotel.GetHotelByID(c.Context(), oid.String())
+	if err != nil {
+		return ErrNotFound()
 	}
 
 	return c.JSON(hotel)

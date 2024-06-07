@@ -2,49 +2,28 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"hotel/db"
-	"hotel/types"
+	"hotel/db/fixtures"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func insertTestUser(t *testing.T, userStore db.UserStore) *types.User {
-	params := types.CreateUserParams{
-		FirstName: "James",
-		LastName:  "Hetfield",
-		Passwd:    "superarrecho",
-		Email:     "metallica.nice.com",
-	}
-
-	user, err := types.NewUserFromParams(params)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := userStore.InsertUser(context.TODO(), user); err != nil {
-		t.Fatal(err)
-	}
-
-	return user
-}
-
 func TestAuthenticateSuccess(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.tearDown(t)
-	insertTestUser(t, tdb.User)
+
+	newUser := fixtures.AddUser(tdb.Store, "James", "Foo", false)
 
 	app := fiber.New()
 	authHandler := NewAuthHandler(tdb.User)
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	params := AuthParams{
-		Email:  "metallica.nice.com",
+		Email:  newUser.Email,
 		Passwd: "superarrecho",
 	}
 
@@ -74,14 +53,14 @@ func TestAuthenticateSuccess(t *testing.T) {
 func TestAuthenticateFailure(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.tearDown(t)
-	insertTestUser(t, tdb.User)
+	newUser := fixtures.AddUser(tdb.Store, "James", "Foo", false)
 
 	app := fiber.New()
 	authHandler := NewAuthHandler(tdb.User)
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	params := AuthParams{
-		Email:  "metallica.nice.com",
+		Email:  newUser.Email,
 		Passwd: "supervergatario",
 	}
 

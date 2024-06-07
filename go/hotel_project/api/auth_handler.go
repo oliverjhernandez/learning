@@ -74,14 +74,14 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	// TODO: Should be better to send this in HTTP headers
 	resp := AuthResponse{
 		User:  user,
-		Token: createTokenFromUser(user),
+		Token: CreateTokenFromUser(user),
 	}
 
 	fmt.Println("Authenticated -> ", user.FirstName)
 	return c.JSON(resp)
 }
 
-func createTokenFromUser(user *types.User) string {
+func CreateTokenFromUser(user *types.User) string {
 	now := time.Now()
 	expires := now.Add(time.Hour * 4).Unix()
 	// TODO: Apparently there are standard claim names

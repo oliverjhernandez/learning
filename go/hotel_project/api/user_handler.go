@@ -8,7 +8,6 @@ import (
 	"hotel/types"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -19,8 +18,9 @@ type UserHandler struct {
 
 func (h *UserHandler) HandlePostUser(c *fiber.Ctx) error {
 	var params types.CreateUserParams
+
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return ErrBadRequest()
 	}
 	if errors := params.Validate(); len(errors) > 0 {
 		return c.JSON(errors)
@@ -30,11 +30,13 @@ func (h *UserHandler) HandlePostUser(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	user2, err := h.store.User.InsertUser(c.Context(), user)
+
+	resp, err := h.store.User.InsertUser(c.Context(), user)
 	if err != nil {
 		return err
 	}
-	return c.JSON(user2)
+
+	return c.JSON(resp)
 }
 
 func (h *UserHandler) HandleDeleteUser(c *fiber.Ctx) error {
@@ -52,15 +54,13 @@ func (h *UserHandler) HandleUpdateUser(c *fiber.Ctx) error {
 	)
 	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return ErrInvalidID()
 	}
 
-	// The object is checked against a type, but there's no validation
-	// as in the HandlePostUser method
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return ErrBadRequest()
 	}
-	filter := bson.M{"_id": oid}
+	filter := db.Params{"_id": oid}
 	if err = h.store.User.UpdateUser(c.Context(), filter, params); err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (h *UserHandler) HandleGetUser(c *fiber.Ctx) error {
 	user, err := h.store.User.GetUserByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return c.JSON(map[string]string{"error": "not found"})
+			return ErrNotFound()
 		}
 		return err
 	}
