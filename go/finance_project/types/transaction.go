@@ -142,14 +142,14 @@ type CreateTransactionParams struct {
 }
 
 type Transaction struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Concept     string             `bson:"concept,omitempty" json:"concept,omitempty"`
 	Description string             `bson:"description,omitempty" json:"description,omitempty"`
-	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
 	Date        int64              `bson:"date,omitempty" json:"date,omitempty"`
 	Relevance   Relevance          `bson:"Relevance,omitempty" json:"Relevance,omitempty"`
 	Currency    Currency           `bson:"currency,omitempty" json:"currency,omitempty"`
 	Account     Account            `bson:"account,omitempty" json:"account,omitempty"`
+	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 }
 
 func (tp CreateTransactionParams) Validate() error {

@@ -11,11 +11,11 @@ const (
 )
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	FirstName string             `bson:"firstname,omitempty" json:"firstname,omitempty"`
 	LastName  string             `bson:"lastname,omitempty" json:"lastname,omitempty"`
 	Email     string             `bson:"email,omitempty" json:"email,omitempty"`
 	Passwd    string             `bson:"passwd,omitempty"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 }
 
 type CreateUserParams struct {
