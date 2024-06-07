@@ -18,9 +18,9 @@ type RoomHandler struct {
 }
 
 type BookRoomParams struct {
-	NumPersons int       `json:"numPersons"`
 	FromDate   time.Time `json:"fromDate"`
 	TillDate   time.Time `json:"tillDate"`
+	NumPersons int       `json:"numPersons"`
 }
 
 func (bp BookRoomParams) validate() error {

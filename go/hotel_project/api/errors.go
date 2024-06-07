@@ -7,8 +7,8 @@ import (
 )
 
 type Error struct {
-	Code int    `json:"statusCode"`
 	Msg  string `json:"message"`
+	Code int    `json:"statusCode"`
 }
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
