@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"hotel/api"
-	"hotel/api/middleware"
 	"hotel/db"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,9 +14,7 @@ import (
 )
 
 var config = fiber.Config{
-	ErrorHandler: func(ctx *fiber.Ctx, err error) error {
-		return ctx.JSON(map[string]string{"error": err.Error()})
-	},
+	ErrorHandler: api.ErrorHandler,
 }
 
 func main() {
@@ -46,9 +43,9 @@ func main() {
 		bookingHandler = api.NewBookingHandler(store)
 		userHandler    = api.NewUserHandler(store)
 
-		appv1 = app.Group("/v1", middleware.JWTAuthentication(store.User))
+		appv1 = app.Group("/v1", api.JWTAuthentication(store.User))
 		auth  = app.Group("/api")
-		admin = appv1.Group("/admin", middleware.AdminAuth)
+		admin = appv1.Group("/admin", api.AdminAuth)
 	)
 
 	// Auth
@@ -72,9 +69,9 @@ func main() {
 	appv1.Post("/room/:id/book", roomHandler.HandleBookRoom)
 
 	// Bookings
-	// TODO: cancel booking
 	admin.Get("/booking", bookingHandler.HandlerGetBookings)
 	appv1.Get("/booking/:id", bookingHandler.HandlerGetBooking)
+	appv1.Get("/booking/:id/cancel", bookingHandler.HandlerCancelBooking)
 
 	app.Listen(*listenAddr)
 }
