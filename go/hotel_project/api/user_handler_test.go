@@ -2,45 +2,14 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
-	"hotel/db"
 	"hotel/types"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-const testDbUri = "mongodb://localhost:27017"
-
-type testDB struct {
-	*db.Store
-}
-
-func (tdb *testDB) tearDown(t *testing.T) {
-	if err := tdb.User.Drop(context.TODO()); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func setup(t *testing.T) *testDB {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(testDbUri))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	store := &db.Store{
-		User: db.NewMongoUserStore(client, db.TDBNAME),
-	}
-
-	return &testDB{
-		Store: store,
-	}
-}
 
 func TestPostUser(t *testing.T) {
 	tdb := setup(t)
