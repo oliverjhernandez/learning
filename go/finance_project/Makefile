@@ -4,5 +4,8 @@ build:
 run: build
 	@./bin/api
 
+seed:
+	@go run scripts/seeds.go
+
 test:
 	@go test -v ./... -count=1
