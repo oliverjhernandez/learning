@@ -105,13 +105,7 @@ func (r *Relevance) UnmarshalJSON(data []byte) error {
 }
 
 type UpdateTransactionParams struct {
-	Concept     string    `json:"concept"`
-	Description string    `json:"description"`
-	Value       int32     `json:"value"`
-	Date        int64     `json:"date"`
-	Relevance   Relevance `json:"Relevance"`
-	Currency    Currency  `json:"currency"`
-	Account     Account   `bson:"account" json:"account"`
+	TransactionBase
 }
 
 func (up UpdateTransactionParams) ToBSON() bson.M {
@@ -131,7 +125,7 @@ func (up UpdateTransactionParams) ToBSON() bson.M {
 
 type Level string
 
-type CreateTransactionParams struct {
+type TransactionBase struct {
 	Concept     string    `json:"concept"`
 	Description string    `json:"description"`
 	Value       int32     `json:"value"`
@@ -141,15 +135,13 @@ type CreateTransactionParams struct {
 	Account     Account   `bson:"account" json:"account"`
 }
 
+type CreateTransactionParams struct {
+	TransactionBase
+}
+
 type Transaction struct {
-	Concept     string             `bson:"concept,omitempty" json:"concept,omitempty"`
-	Description string             `bson:"description,omitempty" json:"description,omitempty"`
-	Date        int64              `bson:"date,omitempty" json:"date,omitempty"`
-	Relevance   Relevance          `bson:"Relevance,omitempty" json:"Relevance,omitempty"`
-	Currency    Currency           `bson:"currency,omitempty" json:"currency,omitempty"`
-	Account     Account            `bson:"account,omitempty" json:"account,omitempty"`
-	Value       int32              `bson:"value,omitempty" json:"value,omitempty"`
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	TransactionBase
+	ID primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 }
 
 func (tp CreateTransactionParams) Validate() error {
@@ -174,12 +166,6 @@ func (tp CreateTransactionParams) Validate() error {
 
 func NewTransactionFromParams(p CreateTransactionParams) (*Transaction, error) {
 	return &Transaction{
-		Concept:     p.Concept,
-		Description: p.Description,
-		Value:       p.Value,
-		Date:        p.Date,
-		Relevance:   p.Relevance,
-		Currency:    p.Currency,
-		Account:     p.Account,
+		TransactionBase: p.TransactionBase,
 	}, nil
 }
