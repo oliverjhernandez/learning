@@ -20,6 +20,14 @@ type MongoCreditStore struct {
 	dbname     string
 }
 
+func NewMongoCreditStore(mc *mongo.Client, dbname string) *MongoCreditStore {
+	return &MongoCreditStore{
+		client:     mc,
+		collection: mc.Database(dbname).Collection(creditsCollection),
+		dbname:     dbname,
+	}
+}
+
 func (cs *MongoCreditStore) GetCredits(ctx context.Context) ([]*types.Credit, error) {
 	cur, err := cs.collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -33,7 +41,7 @@ func (cs *MongoCreditStore) GetCredits(ctx context.Context) ([]*types.Credit, er
 	return credits, nil
 }
 
-func (cs *MongoCreditStore) GetCredityID(ctx context.Context, id string) (*types.Credit, error) {
+func (cs *MongoCreditStore) GetCreditByID(ctx context.Context, id string) (*types.Credit, error) {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
