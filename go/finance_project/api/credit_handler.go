@@ -5,6 +5,7 @@ import (
 	"finance/types"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CreditHandler struct {
@@ -34,7 +35,7 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx, id string) error {
 	return c.JSON(&credit)
 }
 
-func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx, credit *types.Credit) error {
+func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 	var params *types.CreateCreditParams
 	if err := c.BodyParser(&params); err != nil {
 		return ErrInvalidParams()
@@ -51,4 +52,34 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx, credit *types.Credit) e
 	}
 
 	return c.JSON(cred)
+}
+
+func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
+	var (
+		params types.UpdateCreditParams
+		id     = c.Params("id")
+	)
+
+	if err := c.BodyParser(&params); err != nil {
+		return err
+	}
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := map[string]any{"_id": oid}
+
+	ch.Store.Credit.UpdateCredit(c.Context(), filter, &params)
+
+	return c.JSON(map[string]string{"msg": "updated"})
+}
+
+func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	ch.Store.Credit.DeleteCreditByID(c.Context(), id)
+
+	return c.JSON(map[string]string{"msg": "deleteupdatedd"})
 }
