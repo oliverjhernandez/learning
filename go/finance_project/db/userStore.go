@@ -14,14 +14,6 @@ const (
 	userCollection = "users"
 )
 
-type UserStore interface {
-	GetUsers(ctx context.Context) ([]*types.User, error)
-	GetUserByID(ctx context.Context, id string) (*types.User, error)
-	InsertUser(ctx context.Context, user *types.User) (*types.User, error)
-	UpdateUser(ctx context.Context, filter bson.M, params *types.UpdateUserParams) error
-	DeleteUser(ctx context.Context, id string) error
-}
-
 type MongoUserStore struct {
 	client     *mongo.Client
 	collection *mongo.Collection
@@ -68,7 +60,7 @@ func (us *MongoUserStore) InsertUser(ctx context.Context, user *types.User) (*ty
 	return user, nil
 }
 
-func (us *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params *types.UpdateUserParams) error {
+func (us *MongoUserStore) UpdateUser(ctx context.Context, filter Params, params *types.UpdateUserParams) error {
 	values := bson.D{
 		primitive.E{
 			Key: "$set", Value: params.ToBSON(),

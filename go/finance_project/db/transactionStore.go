@@ -14,20 +14,6 @@ const (
 	transactionCollection = "transactions"
 )
 
-type Dropper interface {
-	Drop(ctx context.Context) error
-}
-
-type TransactionStore interface {
-	Dropper
-
-	GetTransactions(ctx context.Context) ([]*types.Transaction, error)
-	GetTransactionByID(ctx context.Context, id string) (*types.Transaction, error)
-	InsertTransaction(ctx context.Context, tx *types.Transaction) (*types.Transaction, error)
-	UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error
-	DeleteTransaction(ctx context.Context, id string) error
-}
-
 type MongoTransactionStore struct {
 	client     *mongo.Client
 	collection *mongo.Collection
@@ -87,7 +73,7 @@ func (ts *MongoTransactionStore) DeleteTransaction(ctx context.Context, id strin
 	return nil
 }
 
-func (ts *MongoTransactionStore) UpdateTransaction(ctx context.Context, filter bson.M, params *types.UpdateTransactionParams) error {
+func (ts *MongoTransactionStore) UpdateTransaction(ctx context.Context, filter Params, params *types.UpdateTransactionParams) error {
 	values := bson.D{
 		primitive.E{
 			Key: "$set", Value: params.ToBSON(),
