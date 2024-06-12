@@ -10,25 +10,25 @@ const (
 	bcryptCost = 12
 )
 
-type User struct {
-	FirstName string             `bson:"firstname,omitempty" json:"firstname,omitempty"`
-	LastName  string             `bson:"lastname,omitempty" json:"lastname,omitempty"`
-	Email     string             `bson:"email,omitempty" json:"email,omitempty"`
-	Passwd    string             `bson:"passwd,omitempty"`
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+type UserBase struct {
+	FirstName string `bson:"firstname,omitempty" json:"firstname,omitempty"`
+	LastName  string `bson:"lastname,omitempty" json:"lastname,omitempty"`
+	Email     string `bson:"email,omitempty" json:"email,omitempty"`
 }
 
 type CreateUserParams struct {
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Email     string `json:"email"`
-	Passwd    string `json:"passwd"`
+	UserBase
+	Passwd string `bson:"passwd,omitempty"`
 }
 
 type UpdateUserParams struct {
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Email     string `json:"email"`
+	UserBase
+}
+
+type User struct {
+	UserBase
+	Passwd string             `bson:"passwd,omitempty"`
+	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 }
 
 func (up UpdateUserParams) ToBSON() bson.M {
@@ -50,9 +50,7 @@ func NewUserFromParams(p CreateUserParams) (*User, error) {
 		return nil, err
 	}
 	return &User{
-		FirstName: p.FirstName,
-		LastName:  p.LastName,
-		Email:     p.Email,
-		Passwd:    string(encpw),
+		UserBase: p.UserBase,
+		Passwd:   string(encpw),
 	}, nil
 }
