@@ -5,16 +5,15 @@ import (
 	"finance/types"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TransactionHandler struct {
-	transactionStore db.TransactionStore
+	Store *db.Store
 }
 
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
-	txs, err := th.transactionStore.GetTransactions(c.Context())
+	txs, err := th.Store.Tx.GetTransactions(c.Context())
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -22,7 +21,7 @@ func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 }
 
 func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
-	tx, err := th.transactionStore.GetTransactionByID(c.Context(), c.Params("id"))
+	tx, err := th.Store.Tx.GetTransactionByID(c.Context(), c.Params("id"))
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -42,7 +41,7 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	res, err := th.transactionStore.InsertTransaction(c.Context(), tx)
+	res, err := th.Store.Tx.InsertTransaction(c.Context(), tx)
 	if err != nil {
 		return err
 	}
@@ -64,9 +63,9 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 		return ErrInvalidID()
 	}
 
-	filter := bson.M{"_id": oid}
+	filter := map[string]any{"_id": oid}
 
-	if err = th.transactionStore.UpdateTransaction(c.Context(), filter, &params); err != nil {
+	if err = th.Store.Tx.UpdateTransaction(c.Context(), filter, &params); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"msg": "updated"})
@@ -74,14 +73,14 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 
 func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
 	id := c.Params("id")
-	if err := th.transactionStore.DeleteTransaction(c.Context(), id); err != nil {
+	if err := th.Store.Tx.DeleteTransaction(c.Context(), id); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"msg": "deleted"})
 }
 
-func NewTransactionHandler(transactionStore db.TransactionStore) *TransactionHandler {
+func NewTransactionHandler(s *db.Store) *TransactionHandler {
 	return &TransactionHandler{
-		transactionStore: transactionStore,
+		Store: s,
 	}
 }

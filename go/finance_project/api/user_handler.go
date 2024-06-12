@@ -5,16 +5,15 @@ import (
 	"finance/types"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserHandler struct {
-	userStore db.UserStore
+	Store *db.Store
 }
 
 func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
-	users, err := uh.userStore.GetUsers(c.Context())
+	users, err := uh.Store.User.GetUsers(c.Context())
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -23,7 +22,7 @@ func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
 
 func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
-	user, err := uh.userStore.GetUserByID(c.Context(), id)
+	user, err := uh.Store.User.GetUserByID(c.Context(), id)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -41,7 +40,7 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	res, err := uh.userStore.InsertUser(c.Context(), user)
+	res, err := uh.Store.User.InsertUser(c.Context(), user)
 	if err != nil {
 		return err
 	}
@@ -50,7 +49,7 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
-	if err := uh.userStore.DeleteUser(c.Context(), c.Params("id")); err != nil {
+	if err := uh.Store.User.DeleteUser(c.Context(), c.Params("id")); err != nil {
 		return err
 	}
 
@@ -67,16 +66,16 @@ func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return ErrInvalidID()
 	}
-	filter := bson.M{"_id": oid}
+	filter := map[string]any{"_id": oid}
 
-	if err := uh.userStore.UpdateUser(c.Context(), filter, &params); err != nil {
+	if err := uh.Store.User.UpdateUser(c.Context(), filter, &params); err != nil {
 		return err
 	}
 	return nil
 }
 
-func NewUserHandler(userStore db.UserStore) *UserHandler {
+func NewUserHandler(s *db.Store) *UserHandler {
 	return &UserHandler{
-		userStore: userStore,
+		Store: s,
 	}
 }
