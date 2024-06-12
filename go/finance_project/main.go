@@ -38,9 +38,13 @@ func main() {
 		// Stores
 		txStore   = db.NewMongoTransactionStore(client, db.DBNAME)
 		userStore = db.NewMongoUserStore(client, db.DBNAME)
+		store     = &db.Store{
+			User: userStore,
+			Tx:   txStore,
+		}
 		// Handlers
-		txHandler   = api.NewTransactionHandler(txStore)
-		userHandler = api.NewUserHandler(userStore)
+		txHandler   = api.NewTransactionHandler(store)
+		userHandler = api.NewUserHandler(store)
 	)
 
 	// Transaction CRUD Endpoints
