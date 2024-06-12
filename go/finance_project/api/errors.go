@@ -6,9 +6,38 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type ErrorMessage int
+
+const (
+	_ = iota
+	UNAUTHORIZED
+	NOT_FOUND
+	INVALID_PARAMETERS
+	INVALID_ID
+	INVALID_REQUEST_BODY
+)
+
+func (e ErrorMessage) String() string {
+	switch e {
+	case UNAUTHORIZED:
+		return "UNAUTHORIZED"
+	case NOT_FOUND:
+		return "NOT_FOUND"
+	case INVALID_PARAMETERS:
+		return "INVALID_PARAMETERS"
+	case INVALID_ID:
+		return "INVALID_ID"
+	case INVALID_REQUEST_BODY:
+		return "INVALID_REQUEST_BODY"
+	default:
+		return "Unknown"
+	}
+}
+
 type Error struct {
-	Message    string `json:"msg"`
-	StatusCode int    `json:"statusCode"`
+	Message    string       `json:"msg"` // TODO: Maybe add the original error message
+	ErrMessage ErrorMessage `json:"errMsg"`
+	StatusCode int          `json:"statusCode"`
 }
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
@@ -20,7 +49,7 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 }
 
 func (e Error) Error() string {
-	return e.Message
+	return e.ErrMessage.String()
 }
 
 func NewError(statusCode int, message string) Error {
@@ -33,34 +62,34 @@ func NewError(statusCode int, message string) Error {
 func ErrUnauthorized() Error {
 	return Error{
 		StatusCode: http.StatusUnauthorized,
-		Message:    "unauthorized",
+		ErrMessage: UNAUTHORIZED,
 	}
 }
 
 func ErrNotFound() Error {
 	return Error{
 		StatusCode: http.StatusNotFound,
-		Message:    "not found",
+		ErrMessage: NOT_FOUND,
 	}
 }
 
 func ErrInvalidParams() Error {
 	return Error{
 		StatusCode: http.StatusBadRequest,
-		Message:    "invalid parameters",
+		ErrMessage: INVALID_PARAMETERS,
 	}
 }
 
 func ErrInvalidReqBody() Error {
 	return Error{
 		StatusCode: http.StatusBadRequest,
-		Message:    "invalid request body",
+		ErrMessage: INVALID_REQUEST_BODY,
 	}
 }
 
 func ErrInvalidID() Error {
 	return Error{
 		StatusCode: http.StatusBadRequest,
-		Message:    "invalid id",
+		ErrMessage: INVALID_ID,
 	}
 }
