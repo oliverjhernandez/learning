@@ -46,7 +46,7 @@ type CreditStore interface {
 	GetCreditByID(ctx context.Context, id string) (*types.Credit, error)
 	InsertCredit(ctx context.Context, cred *types.Credit) (*types.Credit, error)
 	UpdateCredit(ctx context.Context, filter Params, update *types.UpdateCreditParams) error
-	DeleteCredit(ctx context.Context, id string) error
+	DeleteCreditByID(ctx context.Context, id string) error
 }
 
 type Params map[string]any
