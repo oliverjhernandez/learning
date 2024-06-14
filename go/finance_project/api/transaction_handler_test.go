@@ -2,86 +2,32 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"finance/db"
+	"finance/fixtures"
 	"finance/types"
 )
 
-type tDB struct {
-	db.TransactionStore
-}
-
-func (tdb *tDB) tearDown(t *testing.T) {
-	fmt.Println("--- dropping database")
-	if err := tdb.Drop(context.TODO()); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func setup(t *testing.T) *tDB {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.TDBURI))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return &tDB{
-		TransactionStore: db.NewMongoTransactionStore(client, db.TDBNAME),
-	}
-}
-
-func insertTestTx(app *fiber.App, params *types.CreateTransactionParams) (*types.Transaction, error) {
-	tTx, err := types.NewTransactionFromParams(*params)
-	if err != nil {
-		return nil, err
-	}
-
-	b, _ := json.Marshal(tTx)
-
-	req := httptest.NewRequest("POST", "/", bytes.NewReader(b))
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := app.Test(req, 1000*3)
-	if err != nil {
-		return nil, err
-	}
-
-	var tx types.Transaction
-	json.NewDecoder(resp.Body).Decode(&tx)
-
-	return &tx, nil
-}
-
 func TestPostTx(t *testing.T) {
-	tdb := setup(t)
-	defer tdb.tearDown(t)
-
-	app := fiber.New()
-	txHandler := NewTransactionHandler(tdb.TransactionStore)
-
 	app.Post("/", txHandler.HandlerPostTransaction)
 
 	params := &types.CreateTransactionParams{
-		Concept:     "Alquiler",
-		Description: "Castel D'Aiano",
-		Value:       2250000,
-		Date:        1716308030,
-		Relevance:   1,
-		Currency:    types.COP,
-		Account:     types.SAVINGS,
+		TransactionBase: types.TransactionBase{
+			Concept:     "Alquiler",
+			Description: "Castel D'Aiano",
+			Value:       2250000,
+			Date:        1716308030,
+			Relevance:   1,
+			Currency:    types.COP,
+			Account:     types.SAVINGS,
+		},
 	}
 
-	resp, err := insertTestTx(app, params)
+	resp, err := fixtures.AddTx(app, params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,25 +62,22 @@ func TestPostTx(t *testing.T) {
 }
 
 func TestGetTx(t *testing.T) {
-	tdb := setup(t)
-	defer tdb.tearDown(t)
-
-	txHandler := NewTransactionHandler(tdb.TransactionStore)
-	app := fiber.New()
 	app.Post("/", txHandler.HandlerPostTransaction)
 	app.Get("/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
-		Concept:     "Alquiler",
-		Description: "Castel D'Aiano",
-		Value:       2250000,
-		Date:        1716308030,
-		Relevance:   2,
-		Currency:    types.COP,
-		Account:     types.SAVINGS,
+		TransactionBase: types.TransactionBase{
+			Concept:     "Alquiler",
+			Description: "Castel D'Aiano",
+			Value:       2250000,
+			Date:        1716308030,
+			Relevance:   2,
+			Currency:    types.COP,
+			Account:     types.SAVINGS,
+		},
 	}
 
-	postTx, err := insertTestTx(app, params)
+	postTx, err := fixtures.AddTx(app, params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,26 +130,23 @@ func TestGetTx(t *testing.T) {
 }
 
 func TestDeleteTx(t *testing.T) {
-	tdb := setup(t)
-	defer tdb.tearDown(t)
-
-	txHandler := NewTransactionHandler(tdb.TransactionStore)
-	app := fiber.New()
 	app.Post("/", txHandler.HandlerPostTransaction)
 	app.Delete("/:id", txHandler.HandlerDeleteTransaction)
 	app.Get("/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
-		Concept:     "Alquiler",
-		Description: "Castel D'Aiano",
-		Value:       2250000,
-		Date:        1716308030,
-		Relevance:   3,
-		Currency:    types.COP,
-		Account:     types.SAVINGS,
+		TransactionBase: types.TransactionBase{
+			Concept:     "Alquiler",
+			Description: "Castel D'Aiano",
+			Value:       2250000,
+			Date:        1716308030,
+			Relevance:   3,
+			Currency:    types.COP,
+			Account:     types.SAVINGS,
+		},
 	}
 
-	postTx, err := insertTestTx(app, params)
+	postTx, err := fixtures.AddTx(app, params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,41 +182,36 @@ func TestDeleteTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const (
-		MONGO_NO_DOCUMENTS = "mongo: no documents in result"
-	)
-
-	if string(getRespJSON) != MONGO_NO_DOCUMENTS {
-		t.Errorf("expected %s but got %s", MONGO_NO_DOCUMENTS, string(getRespJSON))
+	var compareError ErrorMessage = NOT_FOUND
+	if string(getRespJSON) != compareError.String() {
+		t.Errorf("expected %s but got %s", compareError.String(), string(getRespJSON))
 	}
 }
 
 func TestUpdateTx(t *testing.T) {
-	tdb := setup(t)
-	defer tdb.tearDown(t)
-
-	txHandler := NewTransactionHandler(tdb.TransactionStore)
-	app := fiber.New()
 	app.Post("/", txHandler.HandlerPostTransaction)
 	app.Patch("/:id", txHandler.HandlerUpdateTransaction)
 	app.Get("/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
-		Concept:     "Alquiler",
-		Description: "Castel D'Aiano",
-		Value:       2250000,
-		Date:        1716308030,
-		Relevance:   1,
-		Currency:    types.COP,
-		Account:     types.SAVINGS,
+		TransactionBase: types.TransactionBase{
+			Concept:     "Alquiler",
+			Description: "Castel D'Aiano",
+			Value:       2250000,
+			Date:        1716308030,
+			Relevance:   1,
+			Currency:    types.COP,
+			Account:     types.SAVINGS,
+		},
 	}
 
-	postTx, err := insertTestTx(app, params)
+	postTx, err := fixtures.AddTx(app, params)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	up := map[string]any{"account": types.CHECKINGS}
+	var accountType types.Account = types.SAVINGS
+	up := map[string]any{"account": accountType}
 	b, _ := json.Marshal(up)
 
 	upReq := httptest.NewRequest("PATCH", "/"+postTx.ID.Hex(), bytes.NewReader(b))
