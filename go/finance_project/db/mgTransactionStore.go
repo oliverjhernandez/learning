@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-
 	"finance/types"
 
 	"go.mongodb.org/mongo-driver/bson"
