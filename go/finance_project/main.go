@@ -1,19 +1,17 @@
 package main
 
 import (
-	"context"
 	"flag"
 
 	"finance/api"
 	"finance/db"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
 	dburi = "mongodb://localhost:27017"
+	pg_db = ""
 )
 
 var config = fiber.Config{
@@ -21,10 +19,8 @@ var config = fiber.Config{
 }
 
 func main() {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dburi))
-	if err != nil {
-		panic(err)
-	}
+	client := db.ConnectSQL()
+	defer client.Close()
 
 	app := fiber.New(config)
 	appv1 := app.Group("/v1")
@@ -34,17 +30,15 @@ func main() {
 	})
 
 	var (
-		listenAddr = flag.String("listenAddr", ":3000", "The listen address of the API server")
-		// Stores
-		txStore   = db.NewMongoTransactionStore(client, db.DBNAME)
-		userStore = db.NewMongoUserStore(client, db.DBNAME)
-		store     = &db.Store{
-			User: userStore,
-			Tx:   txStore,
-		}
+		listenAddr  = flag.String("listenAddr", ":3000", "The listen address of the API server")
+		userStore   = db.NewPGUserStore(client)
+		txStore     = db.NewPGTransactionStore(client)
+		creditStore = db.NewPGCreditStore(client)
+
 		// Handlers
-		txHandler   = api.NewTransactionHandler(store)
-		userHandler = api.NewUserHandler(store)
+		txHandler     = api.NewTransactionHandler(txStore)
+		userHandler   = api.NewUserHandler(userStore)
+		creditHandler = api.NewCreditHandler(creditStore)
 	)
 
 	// Transaction CRUD Endpoints
@@ -53,6 +47,13 @@ func main() {
 	appv1.Post("/transaction", txHandler.HandlerPostTransaction)
 	appv1.Delete("/transaction/:id", txHandler.HandlerDeleteTransaction)
 	appv1.Patch("/transaction/:id", txHandler.HandlerUpdateTransaction)
+
+	// Credit CRUD Endpoints
+	appv1.Get("/credit", creditHandler.HandlerGetCredits)
+	appv1.Get("/credit/:id", creditHandler.HandlerGetCredit)
+	appv1.Post("/credit", creditHandler.HandlerPostCredit)
+	appv1.Delete("/credit/:id", creditHandler.HandlerDeleteCredit)
+	appv1.Patch("/credit/:id", creditHandler.HandlerUpdateCredit)
 
 	// User CRUD Endpoints
 	appv1.Get("/user", userHandler.HandlerGetUsers)
