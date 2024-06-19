@@ -1,25 +1,26 @@
 package api
 
 import (
+	"strconv"
+
 	"finance/db"
-	"finance/types"
+	"finance/models"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CreditHandler struct {
-	Store *db.Store
+	Store *db.PGCreditStore
 }
 
-func NewCreditHandler(store *db.Store) *CreditHandler {
+func NewCreditHandler(store *db.PGCreditStore) *CreditHandler {
 	return &CreditHandler{
 		Store: store,
 	}
 }
 
 func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
-	credits, err := ch.Store.Credit.GetCredits(c.Context())
+	credits, err := ch.Store.GetAllCredits()
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -27,8 +28,14 @@ func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
 	return c.JSON(&credits)
 }
 
-func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx, id string) error {
-	credit, err := ch.Store.Credit.GetCreditByID(c.Context(), id)
+func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
+
+	credit, err := ch.Store.GetCreditByID(id)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -36,17 +43,14 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx, id string) error {
 }
 
 func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
-	var params *types.CreateCreditParams
+	var params *models.CreateCreditParams
 	if err := c.BodyParser(&params); err != nil {
 		return ErrInvalidParams()
 	}
 
-	cred, err := types.NewCreditFromParams(params)
-	if err != nil {
-		return err
-	}
+	cred := models.NewCreditFromParams(params)
 
-	_, err = ch.Store.Credit.InsertCredit(c.Context(), cred)
+	_, err := ch.Store.InsertCredit(cred)
 	if err != nil {
 		return err
 	}
@@ -55,31 +59,31 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 }
 
 func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
-	var (
-		params types.UpdateCreditParams
-		id     = c.Params("id")
-	)
+	var params models.UpdateCreditParams
+
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
 
 	if err := c.BodyParser(&params); err != nil {
 		return err
 	}
 
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
-
-	filter := map[string]any{"_id": oid}
-
-	ch.Store.Credit.UpdateCredit(c.Context(), filter, &params)
+	ch.Store.UpdateCredit(id, &params)
 
 	return c.JSON(map[string]string{"msg": "updated"})
 }
 
 func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
-	id := c.Params("id")
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
 
-	ch.Store.Credit.DeleteCreditByID(c.Context(), id)
+	ch.Store.DeleteCreditByID(id)
 
-	return c.JSON(map[string]string{"msg": "deleteupdatedd"})
+	return c.JSON(map[string]string{"msg": "deleted"})
 }

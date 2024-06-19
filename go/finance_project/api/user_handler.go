@@ -1,19 +1,20 @@
 package api
 
 import (
+	"strconv"
+
 	"finance/db"
-	"finance/types"
+	"finance/models"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserHandler struct {
-	Store *db.Store
+	Store *db.PGUserStore
 }
 
 func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
-	users, err := uh.Store.User.GetUsers(c.Context())
+	users, err := uh.Store.GetAllUsers()
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -21,8 +22,13 @@ func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
-	id := c.Params("id")
-	user, err := uh.Store.User.GetUserByID(c.Context(), id)
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
+
+	user, err := uh.Store.GetUserByID(id)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -30,17 +36,14 @@ func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
-	var params types.CreateUserParams
+	var params models.CreateUser
 	if err := c.BodyParser(&params); err != nil {
 		return ErrInvalidReqBody()
 	}
 
-	user, err := types.NewUserFromParams(params)
-	if err != nil {
-		return err
-	}
+	user := models.NewUserFromParams(params)
 
-	res, err := uh.Store.User.InsertUser(c.Context(), user)
+	res, err := uh.Store.InsertUser(user)
 	if err != nil {
 		return err
 	}
@@ -49,7 +52,13 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
-	if err := uh.Store.User.DeleteUser(c.Context(), c.Params("id")); err != nil {
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
+
+	if err := uh.Store.DeleteUserByID(id); err != nil {
 		return err
 	}
 
@@ -57,24 +66,24 @@ func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
-	var params types.UpdateUserParams
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		return err
+	}
+
+	var params models.UpdateUser
 	if err := c.BodyParser(&params); err != nil {
 		return ErrInvalidReqBody()
 	}
 
-	oid, err := primitive.ObjectIDFromHex(c.Params("id"))
-	if err != nil {
-		return ErrInvalidID()
-	}
-	filter := map[string]any{"_id": oid}
-
-	if err := uh.Store.User.UpdateUser(c.Context(), filter, &params); err != nil {
+	if err := uh.Store.UpdateUser(id, &params); err != nil {
 		return err
 	}
 	return nil
 }
 
-func NewUserHandler(s *db.Store) *UserHandler {
+func NewUserHandler(s *db.PGUserStore) *UserHandler {
 	return &UserHandler{
 		Store: s,
 	}

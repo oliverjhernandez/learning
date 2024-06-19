@@ -13,7 +13,7 @@ import (
 )
 
 func TestPostTx(t *testing.T) {
-	app.Post("/", txHandler.HandlerPostTransaction)
+	app.Post("/tx", txHandler.HandlerPostTransaction)
 
 	params := &types.CreateTransactionParams{
 		TransactionBase: types.TransactionBase{
@@ -62,8 +62,8 @@ func TestPostTx(t *testing.T) {
 }
 
 func TestGetTx(t *testing.T) {
-	app.Post("/", txHandler.HandlerPostTransaction)
-	app.Get("/:id", txHandler.HandlerGetTransaction)
+	app.Post("/tx", txHandler.HandlerPostTransaction)
+	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
 		TransactionBase: types.TransactionBase{
@@ -82,7 +82,7 @@ func TestGetTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("GET", "/"+postTx.ID.Hex(), nil)
+	req := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
 	req.Header.Add("Content-Type", "application/json")
 
 	var resp *http.Response
@@ -130,9 +130,9 @@ func TestGetTx(t *testing.T) {
 }
 
 func TestDeleteTx(t *testing.T) {
-	app.Post("/", txHandler.HandlerPostTransaction)
-	app.Delete("/:id", txHandler.HandlerDeleteTransaction)
-	app.Get("/:id", txHandler.HandlerGetTransaction)
+	app.Post("/tx", txHandler.HandlerPostTransaction)
+	app.Delete("/tx/:id", txHandler.HandlerDeleteTransaction)
+	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
 		TransactionBase: types.TransactionBase{
@@ -151,7 +151,7 @@ func TestDeleteTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	delReq := httptest.NewRequest("DELETE", "/"+postTx.ID.Hex(), nil)
+	delReq := httptest.NewRequest("DELETE", "/tx/"+postTx.ID.Hex(), nil)
 	delReq.Header.Add("Content-Type", "application/json")
 
 	delResp, err := app.Test(delReq, 1000*3)
@@ -168,7 +168,7 @@ func TestDeleteTx(t *testing.T) {
 	var delTx types.Transaction
 	json.Unmarshal(delRespJSON, &delTx)
 
-	getReq := httptest.NewRequest("GET", "/"+postTx.ID.Hex(), nil)
+	getReq := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
 	getReq.Header.Add("Content-Type", "application/json")
 
 	getResp, err := app.Test(getReq, 1000*3)
@@ -189,9 +189,9 @@ func TestDeleteTx(t *testing.T) {
 }
 
 func TestUpdateTx(t *testing.T) {
-	app.Post("/", txHandler.HandlerPostTransaction)
-	app.Patch("/:id", txHandler.HandlerUpdateTransaction)
-	app.Get("/:id", txHandler.HandlerGetTransaction)
+	app.Post("/tx/", txHandler.HandlerPostTransaction)
+	app.Patch("/tx/:id", txHandler.HandlerUpdateTransaction)
+	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
 	params := &types.CreateTransactionParams{
 		TransactionBase: types.TransactionBase{
@@ -210,11 +210,11 @@ func TestUpdateTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var accountType types.Account = types.SAVINGS
+	var accountType types.Account = types.CHECKINGS
 	up := map[string]any{"account": accountType}
 	b, _ := json.Marshal(up)
 
-	upReq := httptest.NewRequest("PATCH", "/"+postTx.ID.Hex(), bytes.NewReader(b))
+	upReq := httptest.NewRequest("PATCH", "/tx/"+postTx.ID.Hex(), bytes.NewReader(b))
 	upReq.Header.Add("Content-Type", "application/json")
 
 	upResp, err := app.Test(upReq, 1000*3)
@@ -227,7 +227,7 @@ func TestUpdateTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	getReq := httptest.NewRequest("GET", "/"+postTx.ID.Hex(), nil)
+	getReq := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
 	getReq.Header.Add("Content-Type", "application/json")
 
 	getResp, err := app.Test(getReq, 1000*3)

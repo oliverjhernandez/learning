@@ -29,9 +29,9 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	if err := ts.TearDown(); err != nil {
-		log.Fatalf("failed while tearing down: %v", err)
-	}
+	// if err := ts.TearDown(); err != nil {
+	// 	log.Fatalf("failed while tearing down: %v", err)
+	// }
 
 	os.Exit(code)
 }
