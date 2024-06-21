@@ -16,18 +16,29 @@ const (
 
 // TODO: Maybe create a general store that contains all of them
 type Store struct {
-	UserStore
+	*sql.DB
+	UserStore   UserStore
+	TxnStore    TransactionStore
+	CreditStore CreditStore
 }
 
-type Dropper interface {
-	Drop(ctx context.Context) error
+type DBRepo interface {
+	Transaction(ctx context.Context, operation func(context.Context, *sql.Tx) error) error
 }
 
-// func NewStore(pgClient *sql.DB) (*Store, error) {
-// 	return &Store{
-// 		UserStore: NewPGUserStore(pgClient),
-//	}, nil
+// type Dropper interface {
+// 	Drop(ctx context.Context) error
 // }
+
+func NewStore() (*Store, *sql.DB, error) {
+	client := ConnectSQL()
+	return &Store{
+		DB:          client,
+		UserStore:   NewPGUserStore(client),
+		TxnStore:    NewPGTransactionStore(client),
+		CreditStore: NewPGCreditStore(client),
+	}, client, nil
+}
 
 func ConnectSQL() *sql.DB {
 	// TODO: set config getter
