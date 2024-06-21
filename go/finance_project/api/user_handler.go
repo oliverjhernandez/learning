@@ -10,11 +10,17 @@ import (
 )
 
 type UserHandler struct {
-	Store *db.PGUserStore
+	Store db.UserStore
+}
+
+func NewUserHandler(s *db.Store) *UserHandler {
+	return &UserHandler{
+		Store: s.UserStore,
+	}
 }
 
 func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
-	users, err := uh.Store.GetAllUsers()
+	users, err := uh.Store.GetAllUsers(c.Context(), nil)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -28,7 +34,7 @@ func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	user, err := uh.Store.GetUserByID(id)
+	user, err := uh.Store.GetUserByID(c.Context(), nil, id)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -43,7 +49,7 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 
 	user := models.NewUserFromParams(params)
 
-	res, err := uh.Store.InsertUser(user)
+	res, err := uh.Store.InsertUser(c.Context(), nil, user)
 	if err != nil {
 		return err
 	}
@@ -58,7 +64,7 @@ func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := uh.Store.DeleteUserByID(id); err != nil {
+	if err := uh.Store.DeleteUserByID(c.Context(), nil, id); err != nil {
 		return err
 	}
 
@@ -77,14 +83,8 @@ func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
 		return ErrInvalidReqBody()
 	}
 
-	if err := uh.Store.UpdateUser(id, &params); err != nil {
+	if err := uh.Store.UpdateUser(c.Context(), nil, id, &params); err != nil {
 		return err
 	}
 	return nil
-}
-
-func NewUserHandler(s *db.PGUserStore) *UserHandler {
-	return &UserHandler{
-		Store: s,
-	}
 }

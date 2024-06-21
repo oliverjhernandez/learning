@@ -10,15 +10,21 @@ import (
 )
 
 type TransactionHandler struct {
-	Store *db.PGTransactionStore // TODO: This should be a more general type of store
+	Store db.TransactionStore
+}
+
+func NewTransactionHandler(s *db.Store) *TransactionHandler {
+	return &TransactionHandler{
+		Store: s.TxnStore,
+	}
 }
 
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
-	txs, err := th.Store.GetAllTransactions()
+	txns, err := th.Store.GetAllTransactions(c.Context(), nil)
 	if err != nil {
 		return ErrNotFound()
 	}
-	return c.JSON(&txs)
+	return c.JSON(&txns)
 }
 
 func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
@@ -28,12 +34,12 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	tx, err := th.Store.GetTransactionByID(id)
+	txn, err := th.Store.GetTransactionByID(c.Context(), nil, id)
 	if err != nil {
 		return ErrNotFound()
 	}
 
-	return c.JSON(tx)
+	return c.JSON(txn)
 }
 
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
@@ -48,8 +54,8 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	// 	return ErrInvalidParams()
 	// }
 
-	tx := models.NewTransactionFromParams(params)
-	res, err := th.Store.InsertTransaction(tx)
+	txn := models.NewTransactionFromParams(params)
+	res, err := th.Store.InsertTransaction(c.Context(), nil, txn)
 	if err != nil {
 		return err
 	}
@@ -69,7 +75,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 		return ErrInvalidReqBody()
 	}
 
-	if err = th.Store.UpdateTransaction(id, &params); err != nil {
+	if err = th.Store.UpdateTransaction(c.Context(), nil, id, &params); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"msg": "updated"})
@@ -82,14 +88,8 @@ func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := th.Store.DeleteTransactionByID(id); err != nil {
+	if err := th.Store.DeleteTransactionByID(c.Context(), nil, id); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"msg": "deleted"})
-}
-
-func NewTransactionHandler(s *db.PGTransactionStore) *TransactionHandler {
-	return &TransactionHandler{
-		Store: s,
-	}
 }

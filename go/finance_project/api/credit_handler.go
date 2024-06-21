@@ -10,17 +10,17 @@ import (
 )
 
 type CreditHandler struct {
-	Store *db.PGCreditStore
+	Store db.CreditStore
 }
 
-func NewCreditHandler(store *db.PGCreditStore) *CreditHandler {
+func NewCreditHandler(s *db.Store) *CreditHandler {
 	return &CreditHandler{
-		Store: store,
+		Store: s.CreditStore,
 	}
 }
 
 func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
-	credits, err := ch.Store.GetAllCredits()
+	credits, err := ch.Store.GetAllCredits(c.Context(), nil)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -35,7 +35,7 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	credit, err := ch.Store.GetCreditByID(id)
+	credit, err := ch.Store.GetCreditByID(c.Context(), nil, id)
 	if err != nil {
 		return ErrNotFound()
 	}
@@ -50,7 +50,7 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 
 	cred := models.NewCreditFromParams(params)
 
-	_, err := ch.Store.InsertCredit(cred)
+	_, err := ch.Store.InsertCredit(c.Context(), nil, cred)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	ch.Store.UpdateCredit(id, &params)
+	ch.Store.UpdateCredit(c.Context(), nil, id, &params)
 
 	return c.JSON(map[string]string{"msg": "updated"})
 }
@@ -83,7 +83,7 @@ func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	ch.Store.DeleteCreditByID(id)
+	ch.Store.DeleteCreditByID(c.Context(), nil, id)
 
 	return c.JSON(map[string]string{"msg": "deleted"})
 }
