@@ -10,13 +10,11 @@ import (
 )
 
 type TransactionStore interface {
-	Dropper
-
-	GetAllTransactions() ([]*models.Transaction, error)
-	GetTransactionByID(id string) (*models.Transaction, error)
-	InsertTransaction(tx *models.Transaction) (*models.Transaction, error)
-	UpdateATransactionConcept(id int, concept string) error
-	DeleteTransactionByID(id string) error
+	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (int, error)
+	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
+	GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error)
+	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) error
+	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
 type PGTransactionStore struct {
@@ -29,8 +27,8 @@ func NewPGTransactionStore(client *sql.DB) *PGTransactionStore {
 	}
 }
 
-func (s *PGTransactionStore) InsertTransaction(tx *models.Transaction) (int, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var newID int
@@ -42,17 +40,32 @@ func (s *PGTransactionStore) InsertTransaction(tx *models.Transaction) (int, err
                 ($1, $2, $3, $4, $5, $6)
             returning id`
 
-	err := s.client.QueryRowContext(ctx, query,
-		tx.Concept,
-		tx.Description,
-		tx.Value,
-		tx.Date,
-		tx.Relevance,
-		tx.Currency,
-		tx.Account,
-		time.Now(),
-		time.Now(),
-	).Scan(&newID)
+	var err error
+	if tx != nil {
+		err = s.client.QueryRowContext(ctx, query,
+			txn.Concept,
+			txn.Description,
+			txn.Value,
+			txn.Date,
+			txn.Relevance,
+			txn.Currency,
+			txn.Account,
+			time.Now(),
+			time.Now(),
+		).Scan(&newID)
+	} else {
+		err = s.client.QueryRowContext(ctx, query,
+			txn.Concept,
+			txn.Description,
+			txn.Value,
+			txn.Date,
+			txn.Relevance,
+			txn.Currency,
+			txn.Account,
+			time.Now(),
+			time.Now(),
+		).Scan(&newID)
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -60,11 +73,11 @@ func (s *PGTransactionStore) InsertTransaction(tx *models.Transaction) (int, err
 	return 0, nil
 }
 
-func (s *PGTransactionStore) GetTransactionByID(id int) (models.Transaction, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var tx models.Transaction
+	var txn *models.Transaction
 
 	query := `
             SELECT 
@@ -73,35 +86,57 @@ func (s *PGTransactionStore) GetTransactionByID(id int) (models.Transaction, err
             WHERE
             id=$1`
 
-	err := s.client.QueryRowContext(ctx, query, id).Scan(
-		&tx.ID,
-		&tx.Description,
-		&tx.Value,
-		&tx.Date,
-		&tx.Relevance,
-		&tx.Currency,
-		&tx.Account,
-		&tx.CreatedAt,
-		&tx.UpdatedAt,
-	)
+	var err error
+	if tx != nil {
+		err = s.client.QueryRowContext(ctx, query, id).Scan(
+			&txn.ID,
+			&txn.Description,
+			&txn.Value,
+			&txn.Date,
+			&txn.Relevance,
+			&txn.Currency,
+			&txn.Account,
+			&txn.CreatedAt,
+			&txn.UpdatedAt,
+		)
+	} else {
+		err = s.client.QueryRowContext(ctx, query, id).Scan(
+			&txn.ID,
+			&txn.Description,
+			&txn.Value,
+			&txn.Date,
+			&txn.Relevance,
+			&txn.Currency,
+			&txn.Account,
+			&txn.CreatedAt,
+			&txn.UpdatedAt,
+		)
+	}
 	if err != nil {
-		return tx, err
+		return txn, err
 	}
 
-	return tx, nil
+	return txn, nil
 }
 
-func (s *PGTransactionStore) GetAllTransactions() ([]models.Transaction, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var txs []models.Transaction
+	var txs []*models.Transaction
 
 	query := `
             SELECT (id, first_name, last_name, email, password, created_at, updated_at)
             from transactions`
 
-	rows, err := s.client.QueryContext(ctx, query)
+	var rows *sql.Rows
+	var err error
+	if tx != nil {
+		rows, err = tx.QueryContext(ctx, query)
+	} else {
+		rows, err = s.client.QueryContext(ctx, query)
+	}
+
 	if err != nil {
 		return txs, err
 	}
@@ -127,8 +162,8 @@ func (s *PGTransactionStore) GetAllTransactions() ([]models.Transaction, error) 
 	return txs, nil
 }
 
-func (s *PGTransactionStore) UpdateTransaction(id int, params *models.UpdateTransaction) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
@@ -147,17 +182,32 @@ func (s *PGTransactionStore) UpdateTransaction(id int, params *models.UpdateTran
             id = $8
     `, now)
 
-	_, err := s.client.ExecContext(
-		ctx,
-		query,
-		params.Concept,
-		params.Description,
-		params.Value,
-		params.Date,
-		params.Relevance,
-		params.Currency,
-		params.Account,
-		id)
+	var err error
+	if tx != nil {
+		_, err = s.client.ExecContext(
+			ctx,
+			query,
+			params.Concept,
+			params.Description,
+			params.Value,
+			params.Date,
+			params.Relevance,
+			params.Currency,
+			params.Account,
+			id)
+	} else {
+		_, err = s.client.ExecContext(
+			ctx,
+			query,
+			params.Concept,
+			params.Description,
+			params.Value,
+			params.Date,
+			params.Relevance,
+			params.Currency,
+			params.Account,
+			id)
+	}
 	if err != nil {
 		return err
 	}
@@ -165,13 +215,18 @@ func (s *PGTransactionStore) UpdateTransaction(id int, params *models.UpdateTran
 	return nil
 }
 
-func (s *PGTransactionStore) DeleteTransactionByID(id int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+func (s *PGTransactionStore) DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	query := "DELETE FROM transactions WHERE id = $1"
 
-	_, err := s.client.ExecContext(ctx, query, id)
+	var err error
+	if tx != nil {
+		_, err = s.client.ExecContext(ctx, query, id)
+	} else {
+		_, err = s.client.ExecContext(ctx, query, id)
+	}
 	if err != nil {
 		return err
 	}

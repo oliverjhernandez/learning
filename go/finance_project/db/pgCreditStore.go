@@ -10,12 +10,11 @@ import (
 )
 
 type CreditStore interface {
-	// TODO: Inject context instead of creating it in each method
-	InsertCredit(credit *models.Credit) (int, error)
-	GetCreditByID(id int) (models.Credit, error)
-	GetAllCredits() ([]models.Credit, error)
-	UpdateACreditsName(id int, firstName, lastName string) error
-	DeleteCreditByID(id int) error
+	InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (int, error)
+	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error)
+	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models.Credit, error)
+	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCreditParams) error
+	DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
 type PGCreditStore struct {
@@ -28,8 +27,8 @@ func NewPGCreditStore(client *sql.DB) *PGCreditStore {
 	}
 }
 
-func (s *PGCreditStore) InsertCredit(credit *models.Credit) (int, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var newID int
@@ -41,18 +40,34 @@ func (s *PGCreditStore) InsertCredit(credit *models.Credit) (int, error) {
                 ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             returning id`
 
-	err := s.client.QueryRowContext(ctx, query,
-		credit.ClosingDate,
-		credit.DueDate,
-		credit.Identifier,
-		credit.Entity,
-		credit.Type,
-		credit.Rate,
-		credit.Total,
-		credit.Installments,
-		time.Now(),
-		time.Now(),
-	).Scan(&newID)
+	var err error
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, query,
+			credit.ClosingDate,
+			credit.DueDate,
+			credit.Identifier,
+			credit.Entity,
+			credit.Type,
+			credit.Rate,
+			credit.Total,
+			credit.Installments,
+			time.Now(),
+			time.Now(),
+		).Scan(&newID)
+	} else {
+		err = s.client.QueryRowContext(ctx, query,
+			credit.ClosingDate,
+			credit.DueDate,
+			credit.Identifier,
+			credit.Entity,
+			credit.Type,
+			credit.Rate,
+			credit.Total,
+			credit.Installments,
+			time.Now(),
+			time.Now(),
+		).Scan(&newID)
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -60,8 +75,8 @@ func (s *PGCreditStore) InsertCredit(credit *models.Credit) (int, error) {
 	return 0, nil
 }
 
-func (s *PGCreditStore) GetCreditByID(id int) (models.Credit, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var credit models.Credit
@@ -72,20 +87,36 @@ func (s *PGCreditStore) GetCreditByID(id int) (models.Credit, error) {
             from credits
             WHERE
             id=$1`
-
-	err := s.client.QueryRowContext(ctx, query, id).Scan(
-		&credit.ID,
-		&credit.ClosingDate,
-		&credit.DueDate,
-		&credit.Identifier,
-		&credit.Entity,
-		&credit.Type,
-		&credit.Rate,
-		&credit.Total,
-		&credit.Installments,
-		&credit.CreatedAt,
-		&credit.UpdatedAt,
-	)
+	var err error
+	if tx != nil {
+		err = s.client.QueryRowContext(ctx, query, id).Scan(
+			&credit.ID,
+			&credit.ClosingDate,
+			&credit.DueDate,
+			&credit.Identifier,
+			&credit.Entity,
+			&credit.Type,
+			&credit.Rate,
+			&credit.Total,
+			&credit.Installments,
+			&credit.CreatedAt,
+			&credit.UpdatedAt,
+		)
+	} else {
+		err = s.client.QueryRowContext(ctx, query, id).Scan(
+			&credit.ID,
+			&credit.ClosingDate,
+			&credit.DueDate,
+			&credit.Identifier,
+			&credit.Entity,
+			&credit.Type,
+			&credit.Rate,
+			&credit.Total,
+			&credit.Installments,
+			&credit.CreatedAt,
+			&credit.UpdatedAt,
+		)
+	}
 	if err != nil {
 		return credit, err
 	}
@@ -93,8 +124,8 @@ func (s *PGCreditStore) GetCreditByID(id int) (models.Credit, error) {
 	return credit, nil
 }
 
-func (s *PGCreditStore) GetAllCredits() ([]models.Credit, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models.Credit, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var credits []models.Credit
@@ -104,7 +135,13 @@ func (s *PGCreditStore) GetAllCredits() ([]models.Credit, error) {
               (closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at)
             from credits`
 
-	rows, err := s.client.QueryContext(ctx, query)
+	var rows *sql.Rows
+	var err error
+	if tx != nil {
+		rows, err = tx.QueryContext(ctx, query)
+	} else {
+		rows, err = s.client.QueryContext(ctx, query)
+	}
 	if err != nil {
 		return credits, err
 	}
@@ -132,8 +169,8 @@ func (s *PGCreditStore) GetAllCredits() ([]models.Credit, error) {
 	return credits, nil
 }
 
-func (s *PGCreditStore) UpdateCredit(id int, params *models.UpdateCreditParams) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCreditParams) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
@@ -153,18 +190,34 @@ func (s *PGCreditStore) UpdateCredit(id int, params *models.UpdateCreditParams) 
             id = $9
     `, now)
 
-	_, err := s.client.ExecContext(
-		ctx,
-		query,
-		params.ClosingDate,
-		params.DueDate,
-		params.Identifier,
-		params.Entity,
-		params.Type,
-		params.Rate,
-		params.Total,
-		params.Installments,
-		id)
+	var err error
+	if tx != nil {
+		_, err = s.client.ExecContext(
+			ctx,
+			query,
+			params.ClosingDate,
+			params.DueDate,
+			params.Identifier,
+			params.Entity,
+			params.Type,
+			params.Rate,
+			params.Total,
+			params.Installments,
+			id)
+	} else {
+		_, err = s.client.ExecContext(
+			ctx,
+			query,
+			params.ClosingDate,
+			params.DueDate,
+			params.Identifier,
+			params.Entity,
+			params.Type,
+			params.Rate,
+			params.Total,
+			params.Installments,
+			id)
+	}
 	if err != nil {
 		return err
 	}
@@ -172,13 +225,18 @@ func (s *PGCreditStore) UpdateCredit(id int, params *models.UpdateCreditParams) 
 	return nil
 }
 
-func (s *PGCreditStore) DeleteCreditByID(id int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+func (s *PGCreditStore) DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	query := "DELETE FROM credits WHERE id = $1"
 
-	_, err := s.client.ExecContext(ctx, query, id)
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(ctx, query, id)
+	} else {
+		_, err = s.client.ExecContext(ctx, query, id)
+	}
 	if err != nil {
 		return err
 	}
