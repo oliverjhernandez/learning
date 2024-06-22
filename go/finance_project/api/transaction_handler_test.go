@@ -4,27 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"finance/fixtures"
-	"finance/types"
+	"finance/models"
 )
 
 func TestPostTx(t *testing.T) {
 	app.Post("/tx", txHandler.HandlerPostTransaction)
 
-	params := &types.CreateTransactionParams{
-		TransactionBase: types.TransactionBase{
-			Concept:     "Alquiler",
-			Description: "Castel D'Aiano",
-			Value:       2250000,
-			Date:        1716308030,
-			Relevance:   1,
-			Currency:    types.COP,
-			Account:     types.SAVINGS,
-		},
+	params := &models.CreateTransaction{
+		Concept:     "Alquiler",
+		Description: "Castel D'Aiano",
+		Value:       2250000,
+		Date:        1716308030,
+		Relevance:   1,
+		Currency:    models.COP,
+		Account:     models.SAVINGS,
 	}
 
 	resp, err := fixtures.AddTx(app, params)
@@ -65,16 +62,14 @@ func TestGetTx(t *testing.T) {
 	app.Post("/tx", txHandler.HandlerPostTransaction)
 	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
-	params := &types.CreateTransactionParams{
-		TransactionBase: types.TransactionBase{
-			Concept:     "Alquiler",
-			Description: "Castel D'Aiano",
-			Value:       2250000,
-			Date:        1716308030,
-			Relevance:   2,
-			Currency:    types.COP,
-			Account:     types.SAVINGS,
-		},
+	params := &models.CreateTransaction{
+		Concept:     "Alquiler",
+		Description: "Castel D'Aiano",
+		Value:       2250000,
+		Date:        1716308030,
+		Relevance:   2,
+		Currency:    models.COP,
+		Account:     models.SAVINGS,
 	}
 
 	postTx, err := fixtures.AddTx(app, params)
@@ -82,23 +77,10 @@ func TestGetTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
-	req.Header.Add("Content-Type", "application/json")
-
-	var resp *http.Response
-	resp, err = app.Test(req, 1000*3)
+	getTx, err := fixtures.GetTx(app, postTx.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	var respJSON []byte
-	respJSON, err = io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var getTx types.Transaction
-	json.Unmarshal(respJSON, &getTx)
 
 	if getTx.Concept != params.Concept {
 		t.Errorf("got %s but expected %s", getTx.Concept, params.Concept)
@@ -134,16 +116,14 @@ func TestDeleteTx(t *testing.T) {
 	app.Delete("/tx/:id", txHandler.HandlerDeleteTransaction)
 	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
-	params := &types.CreateTransactionParams{
-		TransactionBase: types.TransactionBase{
-			Concept:     "Alquiler",
-			Description: "Castel D'Aiano",
-			Value:       2250000,
-			Date:        1716308030,
-			Relevance:   3,
-			Currency:    types.COP,
-			Account:     types.SAVINGS,
-		},
+	params := &models.CreateTransaction{
+		Concept:     "Alquiler",
+		Description: "Castel D'Aiano",
+		Value:       2250000,
+		Date:        1716308030,
+		Relevance:   3,
+		Currency:    models.COP,
+		Account:     models.SAVINGS,
 	}
 
 	postTx, err := fixtures.AddTx(app, params)
@@ -151,7 +131,7 @@ func TestDeleteTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	delReq := httptest.NewRequest("DELETE", "/tx/"+postTx.ID.Hex(), nil)
+	delReq := httptest.NewRequest("DELETE", "/tx/"+string(rune(postTx.ID)), nil)
 	delReq.Header.Add("Content-Type", "application/json")
 
 	delResp, err := app.Test(delReq, 1000*3)
@@ -165,26 +145,14 @@ func TestDeleteTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var delTx types.Transaction
+	var delTx models.Transaction
 	json.Unmarshal(delRespJSON, &delTx)
 
-	getReq := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
-	getReq.Header.Add("Content-Type", "application/json")
-
-	getResp, err := app.Test(getReq, 1000*3)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var getRespJSON []byte
-	getRespJSON, err = io.ReadAll(getResp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, err = fixtures.GetTx(app, postTx.ID)
 
 	var compareError ErrorMessage = NOT_FOUND
-	if string(getRespJSON) != compareError.String() {
-		t.Errorf("expected %s but got %s", compareError.String(), string(getRespJSON))
+	if err.Error() != compareError.String() {
+		t.Errorf("expected %s but got %s", compareError.String(), err.Error())
 	}
 }
 
@@ -193,16 +161,14 @@ func TestUpdateTx(t *testing.T) {
 	app.Patch("/tx/:id", txHandler.HandlerUpdateTransaction)
 	app.Get("/tx/:id", txHandler.HandlerGetTransaction)
 
-	params := &types.CreateTransactionParams{
-		TransactionBase: types.TransactionBase{
-			Concept:     "Alquiler",
-			Description: "Castel D'Aiano",
-			Value:       2250000,
-			Date:        1716308030,
-			Relevance:   1,
-			Currency:    types.COP,
-			Account:     types.SAVINGS,
-		},
+	params := &models.CreateTransaction{
+		Concept:     "Alquiler",
+		Description: "Castel D'Aiano",
+		Value:       2250000,
+		Date:        1716308030,
+		Relevance:   1,
+		Currency:    models.COP,
+		Account:     models.SAVINGS,
 	}
 
 	postTx, err := fixtures.AddTx(app, params)
@@ -210,11 +176,11 @@ func TestUpdateTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var accountType types.Account = types.CHECKINGS
+	var accountType models.Account = models.CHECKINGS
 	up := map[string]any{"account": accountType}
 	b, _ := json.Marshal(up)
 
-	upReq := httptest.NewRequest("PATCH", "/tx/"+postTx.ID.Hex(), bytes.NewReader(b))
+	upReq := httptest.NewRequest("PATCH", "/tx/"+string(rune(postTx.ID)), bytes.NewReader(b))
 	upReq.Header.Add("Content-Type", "application/json")
 
 	upResp, err := app.Test(upReq, 1000*3)
@@ -227,21 +193,10 @@ func TestUpdateTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	getReq := httptest.NewRequest("GET", "/tx/"+postTx.ID.Hex(), nil)
-	getReq.Header.Add("Content-Type", "application/json")
-
-	getResp, err := app.Test(getReq, 1000*3)
+	getTx, err := fixtures.GetTx(app, postTx.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	b, err = io.ReadAll(getResp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var getTx types.Transaction
-	json.Unmarshal(b, &getTx)
 
 	if getTx.Account != up["account"] {
 		t.Errorf("expected %s but got %s", up["account"], getTx.Account)

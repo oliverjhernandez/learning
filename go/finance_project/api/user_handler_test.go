@@ -4,23 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"finance/fixtures"
-	"finance/types"
+	"finance/models"
 )
 
 func TestPostUser(t *testing.T) {
 	app.Post("/usr", userHandler.HandlerPostUser)
 
-	params := &types.CreateUserParams{
-		UserBase: types.UserBase{
-			FirstName: "Corina",
-			LastName:  "Pulido",
-			Email:     "corinapulido@gmail.com",
-		},
+	params := &models.CreateUser{
+		FirstName: "Corina",
+		LastName:  "Pulido",
+		Email:     "corinapulido@gmail.com",
 	}
 
 	resp, err := fixtures.AddUser(app, params)
@@ -28,8 +25,16 @@ func TestPostUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if resp.UserBase != params.UserBase {
-		t.Errorf("got %v but expected %v", resp.UserBase, params.UserBase)
+	if resp.FirstName != params.FirstName {
+		t.Errorf("got %v but expected %v", resp.FirstName, params.FirstName)
+	}
+
+	if resp.LastName != params.LastName {
+		t.Errorf("got %v but expected %v", resp.LastName, params.LastName)
+	}
+
+	if resp.Email != params.Email {
+		t.Errorf("got %v but expected %v", resp.Email, params.Email)
 	}
 }
 
@@ -37,12 +42,10 @@ func TestGetUser(t *testing.T) {
 	app.Post("/usr", userHandler.HandlerPostUser)
 	app.Get("/usr/:id", userHandler.HandlerGetUser)
 
-	params := &types.CreateUserParams{
-		UserBase: types.UserBase{
-			FirstName: "Corina",
-			LastName:  "Pulido",
-			Email:     "corinapulido@gmail.com",
-		},
+	params := &models.CreateUser{
+		FirstName: "Corina",
+		LastName:  "Pulido",
+		Email:     "corinapulido@gmail.com",
 	}
 
 	postUser, err := fixtures.AddUser(app, params)
@@ -50,29 +53,21 @@ func TestGetUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("GET", "/usr/"+postUser.ID.Hex(), nil)
-	req.Header.Add("Content-Type", "application/json")
-
-	var resp *http.Response
-	resp, err = app.Test(req, 1000*3)
+	getUser, err := fixtures.GetUser(app, postUser.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var respJSON []byte
-	respJSON, err = io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal(err)
+	if getUser.FirstName != params.FirstName {
+		t.Errorf("got %s but expected %s", getUser.FirstName, params.FirstName)
 	}
 
-	var getUser types.User
-	err = json.Unmarshal(respJSON, &getUser)
-	if err != nil {
-		t.Fatal(err)
+	if getUser.LastName != params.LastName {
+		t.Errorf("got %s but expected %s", getUser.LastName, params.LastName)
 	}
 
-	if getUser.UserBase != params.UserBase {
-		t.Errorf("got %s but expected %s", getUser.UserBase, params.UserBase)
+	if getUser.Email != params.Email {
+		t.Errorf("got %s but expected %s", getUser.Email, params.Email)
 	}
 }
 
@@ -81,12 +76,10 @@ func TestUpdateUser(t *testing.T) {
 	app.Patch("/usr/:id", userHandler.HandlerUpdateUser)
 	app.Get("/usr/:id", userHandler.HandlerGetUser)
 
-	params := &types.CreateUserParams{
-		UserBase: types.UserBase{
-			FirstName: "Corina",
-			LastName:  "Pulido",
-			Email:     "corinapulido@gmail.com",
-		},
+	params := &models.CreateUser{
+		FirstName: "Corina",
+		LastName:  "Pulido",
+		Email:     "corinapulido@gmail.com",
 	}
 
 	postUser, err := fixtures.AddUser(app, params)
@@ -95,17 +88,14 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	name := "Mi Vida"
-	up := types.UserBase{FirstName: name}
-	updateParams := types.UpdateUserParams{
-		UserBase: up,
-	}
+	update := models.UpdateUser{FirstName: name}
 
-	b, err := json.Marshal(updateParams)
+	b, err := json.Marshal(update)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	upReq := httptest.NewRequest("PATCH", "/usr/"+postUser.ID.Hex(), bytes.NewReader(b))
+	upReq := httptest.NewRequest("PATCH", "/usr/"+string(rune(postUser.ID)), bytes.NewReader(b))
 	upReq.Header.Add("Content-Type", "application/json")
 
 	upResp, err := app.Test(upReq, 1000*3)
@@ -118,24 +108,13 @@ func TestUpdateUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	getReq := httptest.NewRequest("GET", "/usr/"+postUser.ID.Hex(), nil)
-	getReq.Header.Add("Content-Type", "application/json")
-
-	getResp, err := app.Test(getReq, 1000*3)
+	getUser, err := fixtures.GetUser(app, postUser.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	b, err = io.ReadAll(getResp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var user types.User
-	json.Unmarshal(b, &user)
-
-	if user.UserBase.FirstName != name {
-		t.Errorf("expected %s but got %s", name, user.UserBase.FirstName)
+	if getUser.FirstName != name {
+		t.Errorf("expected %s but got %s", name, getUser.FirstName)
 	}
 }
 
@@ -144,20 +123,18 @@ func TestDeleteUser(t *testing.T) {
 	app.Delete("/usr/:id", userHandler.HandlerDeleteUser)
 	app.Get("/usr/:id", userHandler.HandlerGetUser)
 
-	params := &types.CreateUserParams{
-		UserBase: types.UserBase{
-			FirstName: "Corina",
-			LastName:  "Pulido",
-			Email:     "corinapulido@gmail.com",
-		},
+	params := &models.CreateUser{
+		FirstName: "Corina",
+		LastName:  "Pulido",
+		Email:     "corinapulido@gmail.com",
 	}
 
-	resp, err := fixtures.AddUser(app, params)
+	postUser, err := fixtures.AddUser(app, params)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	delReq := httptest.NewRequest("DELETE", "/usr/"+resp.ID.Hex(), nil)
+	delReq := httptest.NewRequest("DELETE", "/usr/"+string(rune(postUser.ID)), nil)
 	delReq.Header.Add("Content-Type", "application/json")
 
 	delResp, err := app.Test(delReq, 1000*3)
@@ -171,25 +148,13 @@ func TestDeleteUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var delUser types.User
+	var delUser models.User
 	json.Unmarshal(delRespJSON, &delUser)
 
-	getReq := httptest.NewRequest("GET", "/usr/"+resp.ID.Hex(), nil)
-	getReq.Header.Add("Content-Type", "application/json")
+	_, err = fixtures.GetUser(app, postUser.ID)
 
-	getResp, err := app.Test(getReq, 1000*3)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var getRespJSON []byte
-	getRespJSON, err = io.ReadAll(getResp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var compareError ErrorMessage = NOT_FOUND
-	if string(getRespJSON) != compareError.String() {
-		t.Errorf("expected %s but got %s", compareError.String(), string(getRespJSON))
+	var not_found ErrorMessage = NOT_FOUND
+	if err.Error() != not_found.String() {
+		t.Errorf("expected %s but got %s", not_found.String(), err.Error())
 	}
 }
