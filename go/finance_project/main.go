@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"finance/api"
 	"finance/db"
@@ -19,7 +20,10 @@ var config = fiber.Config{
 }
 
 func main() {
-	client := db.ConnectSQL()
+	store, client, err := db.NewStore()
+	if err != nil {
+		fmt.Printf("error loading db store")
+	}
 	defer client.Close()
 
 	app := fiber.New(config)
@@ -30,15 +34,13 @@ func main() {
 	})
 
 	var (
-		listenAddr  = flag.String("listenAddr", ":3000", "The listen address of the API server")
-		userStore   = db.NewPGUserStore(client)
-		txStore     = db.NewPGTransactionStore(client)
-		creditStore = db.NewPGCreditStore(client)
+		listenAddr = flag.String("listenAddr", ":3000", "The listen address of the API server")
+		// store, _   = db.NewStore(client)
 
 		// Handlers
-		txHandler     = api.NewTransactionHandler(txStore)
-		userHandler   = api.NewUserHandler(userStore)
-		creditHandler = api.NewCreditHandler(creditStore)
+		txHandler     = api.NewTransactionHandler(store)
+		userHandler   = api.NewUserHandler(store)
+		creditHandler = api.NewCreditHandler(store)
 	)
 
 	// Transaction CRUD Endpoints
