@@ -77,7 +77,7 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var txn *models.Transaction
+	var txn models.Transaction
 
 	query := `
             SELECT 
@@ -113,10 +113,10 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 		)
 	}
 	if err != nil {
-		return txn, err
+		return &txn, err
 	}
 
-	return txn, nil
+	return &txn, nil
 }
 
 func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error) {
