@@ -2,27 +2,23 @@ package fixtures
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"net/http/httptest"
 
 	"finance/db"
-	"finance/types"
+	"finance/models"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const testDbUri = "mongodb://localhost:27017"
-
 type TestStore struct {
-	client *mongo.Client
-	*db.Store
+	Store *db.Store
 }
 
 func (ts *TestStore) TearDown() error {
-	if err := ts.client.Database(db.TDBNAME).Drop(context.TODO()); err != nil {
+	if err := ts.Store.Close(); err != nil {
 		return err
 	}
 
@@ -30,34 +26,22 @@ func (ts *TestStore) TearDown() error {
 }
 
 func NewTestStore() (*TestStore, error) {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(testDbUri))
+	store, _, err := db.NewStore()
 	if err != nil {
 		return nil, err
 	}
 
-	userStore := db.NewMongoUserStore(client, db.TDBNAME)
-	txStore := db.NewMongoTransactionStore(client, db.TDBNAME)
-	creditStore := db.NewMongoCreditStore(client, db.TDBNAME)
-
 	return &TestStore{
-		client: client,
-		Store: &db.Store{
-			User:   userStore,
-			Tx:     txStore,
-			Credit: creditStore,
-		},
+		Store: store,
 	}, nil
 }
 
-func AddTx(app *fiber.App, params *types.CreateTransactionParams) (*types.Transaction, error) {
-	tTx, err := types.NewTransactionFromParams(*params)
-	if err != nil {
-		return nil, err
-	}
+func AddTx(app *fiber.App, params *models.CreateTransaction) (*models.Transaction, error) {
+	tTx := models.NewTransactionFromParams(*params)
 
 	b, _ := json.Marshal(tTx)
 
-	req := httptest.NewRequest("POST", "/", bytes.NewReader(b))
+	req := httptest.NewRequest("POST", "/tx", bytes.NewReader(b))
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := app.Test(req, 1000*3)
@@ -65,29 +49,76 @@ func AddTx(app *fiber.App, params *types.CreateTransactionParams) (*types.Transa
 		return nil, err
 	}
 
-	var tx types.Transaction
+	var tx models.Transaction
 	json.NewDecoder(resp.Body).Decode(&tx)
 
 	return &tx, nil
 }
 
-func AddUser(app *fiber.App, params *types.CreateUserParams) (*types.User, error) {
-	tUser, err := types.NewUserFromParams(*params)
-	if err != nil {
-		return nil, err
-	}
-
-	b, _ := json.Marshal(tUser)
-	req := httptest.NewRequest("POST", "/", bytes.NewReader(b))
+func GetTx(app *fiber.App, id int) (*models.Transaction, error) {
+	req := httptest.NewRequest("GET", "/tx/"+string(rune(id)), nil)
 	req.Header.Add("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	var resp *http.Response
+	resp, err := app.Test(req, 1000*3)
 	if err != nil {
 		return nil, err
 	}
 
-	var user *types.User
-	json.NewDecoder(resp.Body).Decode(&user)
+	var respJSON []byte
+	respJSON, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var getTx models.Transaction
+	json.Unmarshal(respJSON, &getTx)
+
+	return &getTx, nil
+}
+
+func AddUser(app *fiber.App, params *models.CreateUser) (*models.User, error) {
+	tUser := models.NewUserFromParams(*params)
+
+	b, _ := json.Marshal(tUser)
+	req := httptest.NewRequest("POST", "/usr", bytes.NewReader(b))
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := app.Test(req, 1000*3)
+	if err != nil {
+		return nil, err
+	}
+
+	var user *models.User
+	err = json.NewDecoder(resp.Body).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
 
 	return user, nil
+}
+
+func GetUser(app *fiber.App, id int) (*models.User, error) {
+	req := httptest.NewRequest("GET", "/usr/"+string(rune(id)), nil)
+	req.Header.Add("Content-Type", "application/json")
+
+	var resp *http.Response
+	resp, err := app.Test(req, 1000*3)
+	if err != nil {
+		return nil, err
+	}
+
+	var respJSON []byte
+	respJSON, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var getUser models.User
+	err = json.Unmarshal(respJSON, &getUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return &getUser, nil
 }
