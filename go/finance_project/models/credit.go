@@ -47,42 +47,42 @@ func (t Type) String() string {
 }
 
 type UpdateCredit struct {
-	UpdatedAt    time.Time
-	ClosingDate  time.Time
-	DueDate      time.Time
-	Identifier   string
-	Entity       Entity
-	Type         Type
-	Rate         float32
-	Total        int32
-	Installments int8
-	UserID       int
+	UpdatedAt    time.Time `json:"updated_at"`
+	ClosingDate  time.Time `json:"closing_date"`
+	DueDate      time.Time `json:"due_date"`
+	Identifier   string    `json:"identifier"`
+	Entity       Entity    `json:"entity"`
+	Type         Type      `json:"type"`
+	Rate         float32   `json:"rate"`
+	Total        int32     `json:"total"`
+	Installments int8      `json:"installments"`
+	UserID       int       `json:"user_id"`
 }
 
 type CreateCredit struct {
-	ClosingDate  time.Time
-	DueDate      time.Time
-	Identifier   string
-	Entity       Entity
-	Type         Type
-	Rate         float32
-	Total        int32
-	Installments int8
-	UserID       int
+	ClosingDate  time.Time `json:"closing_date"`
+	DueDate      time.Time `json:"due_date"`
+	Identifier   string    `json:"identifier"`
+	Entity       Entity    `json:"entity"`
+	Type         Type      `json:"type"`
+	Rate         float32   `json:"rate"`
+	Total        int32     `json:"total"`
+	Installments int8      `json:"installments"`
+	UserID       int       `json:"user_id"`
 }
 
 type Credit struct {
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	ClosingDate  time.Time
-	DueDate      time.Time
-	Identifier   string
-	Entity       Entity
-	Type         Type
-	Rate         float32
-	Total        int32
-	ID           int
-	UserID       int
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ClosingDate  time.Time `json:"closing_date"`
+	DueDate      time.Time `json:"due_date"`
+	Identifier   string    `json:"identifier"`
+	Entity       Entity    `json:"entity"`
+	Type         Type      `json:"type"`
+	Rate         float32   `json:"rate"`
+	Total        int32     `json:"total"`
+	ID           int       `json:"installments"`
+	UserID       int       `json:"user_id"`
 	Installments int8
 }
 
