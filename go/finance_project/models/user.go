@@ -1,6 +1,15 @@
 package models
 
-import "time"
+import (
+	"net/mail"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	bcryptCost = 12
+)
 
 type User struct {
 	CreatedAt time.Time `json:"created_at"`
@@ -28,14 +37,29 @@ type UpdateUser struct {
 	IsAdmin   bool   `json:"is_admin"`
 }
 
-func NewUserFromParams(u CreateUser) *User {
+func isValidEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
+func IsValidPasswd(encpw, pw string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(encpw), []byte(pw)) == nil
+}
+
+func NewUserFromParams(u *CreateUser) (*User, error) {
 	now := time.Now()
+	encpw, err := bcrypt.GenerateFromPassword([]byte(u.Passwd), bcryptCost)
+	if err != nil {
+		return nil, err
+	}
 
 	return &User{
 		CreatedAt: now,
 		UpdatedAt: now,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		IsAdmin:   u.IsAdmin,
+		Passwd:    string(encpw),
 		Email:     u.Email,
-	}
+	}, nil
 }
