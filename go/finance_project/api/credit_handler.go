@@ -43,7 +43,7 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 }
 
 func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
-	var params *models.CreateCreditParams
+	var params *models.CreateCredit
 	if err := c.BodyParser(&params); err != nil {
 		return ErrInvalidParams()
 	}
@@ -59,7 +59,7 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 }
 
 func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
-	var params models.UpdateCreditParams
+	var params models.UpdateCredit
 
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
