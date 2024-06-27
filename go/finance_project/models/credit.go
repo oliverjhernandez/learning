@@ -81,9 +81,9 @@ type Credit struct {
 	Type         Type      `json:"type"`
 	Rate         float32   `json:"rate"`
 	Total        int32     `json:"total"`
-	ID           int       `json:"installments"`
+	ID           int       `json:"id"`
 	UserID       int       `json:"user_id"`
-	Installments int8
+	Installments int8      `json:"installments"`
 }
 
 func NewCreditFromParams(p *CreateCredit) *Credit {
