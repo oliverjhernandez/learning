@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"finance/models"
@@ -13,7 +14,7 @@ type CreditStore interface {
 	InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (int, error)
 	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error)
 	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models.Credit, error)
-	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCreditParams) error
+	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) error
 	DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -34,11 +35,12 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 	var newID int
 
 	query := `
-            INSERT into credits 
-                (closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at)
-            values 
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            returning id`
+            INSERT INTO credits
+                (closing_date, due_date, identifier, entity, type, rate, total, user_id, installments, created_at, updated_at)
+            VALUES
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id
+    `
 
 	var err error
 	if tx != nil {
@@ -50,6 +52,7 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 			credit.Type,
 			credit.Rate,
 			credit.Total,
+			credit.UserID,
 			credit.Installments,
 			time.Now(),
 			time.Now(),
@@ -63,6 +66,7 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 			credit.Type,
 			credit.Rate,
 			credit.Total,
+			credit.UserID,
 			credit.Installments,
 			time.Now(),
 			time.Now(),
@@ -72,7 +76,7 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 		return 0, err
 	}
 
-	return 0, nil
+	return newID, nil
 }
 
 func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error) {
@@ -83,13 +87,14 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 
 	query := `
             SELECT 
-              (closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at)
-            from credits
-            WHERE
-            id=$1`
+              id, closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at
+            FROM credits
+            WHERE id=$1
+    `
+
 	var err error
 	if tx != nil {
-		err = s.client.QueryRowContext(ctx, query, id).Scan(
+		err = tx.QueryRowContext(ctx, query, id).Scan(
 			&credit.ID,
 			&credit.ClosingDate,
 			&credit.DueDate,
@@ -118,6 +123,7 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 		)
 	}
 	if err != nil {
+		fmt.Printf("error: %v", err)
 		return credit, err
 	}
 
@@ -132,7 +138,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models
 
 	query := `
             SELECT 
-              (closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at)
+              id, closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at
             from credits`
 
 	var rows *sql.Rows
@@ -145,6 +151,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models
 	if err != nil {
 		return credits, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var credit models.Credit
@@ -164,59 +171,86 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models
 		if err != nil {
 			return credits, err
 		}
+
+		credits = append(credits, credit)
 	}
 
 	return credits, nil
 }
 
-func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCreditParams) error {
+func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
 
+	setClauses := []string{}
+	args := []interface{}{}
+	argID := 1
+
+	if !params.ClosingDate.IsZero() {
+		setClauses = append(setClauses, fmt.Sprintf("closing_date = $%d", argID))
+		args = append(args, params.ClosingDate)
+		argID++
+	}
+	if !params.DueDate.IsZero() {
+		setClauses = append(setClauses, fmt.Sprintf("due_date = $%d", argID))
+		args = append(args, params.DueDate)
+		argID++
+	}
+	if params.Identifier != "" {
+		setClauses = append(setClauses, fmt.Sprintf("identifier = $%d", argID))
+		args = append(args, params.Identifier)
+		argID++
+	}
+	if params.Entity != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("entity = $%d", argID))
+		args = append(args, params.Entity)
+		argID++
+	}
+	if params.Type != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("type = $%d", argID))
+		args = append(args, params.Type)
+		argID++
+	}
+	if params.Rate != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("rate = $%d", argID))
+		args = append(args, params.Rate)
+		argID++
+	}
+	if params.Total != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("total = $%d", argID))
+		args = append(args, params.Total)
+		argID++
+	}
+	if params.Installments != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("installments = $%d", argID))
+		args = append(args, params.Installments)
+		argID++
+	}
+	if params.UserID != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("user_id = $%d", argID))
+		args = append(args, params.UserID)
+		argID++
+	}
+
+	setClauses = append(setClauses, fmt.Sprintf("updated_at = $%d", argID))
+	args = append(args, now)
+	argID++
+
+	args = append(args, id)
+
 	query := fmt.Sprintf(`
-        UPDATE credits set 
-            closing_date = COALESCE($1, closing_date),
-            due_date = COALESCE($2, due_date),
-            identifier = COALESCE($3, identifier),
-            entity = COALESCE($4, entity),
-            type = COALESCE($5, type),
-            rate = COALESCE($6, rate),
-            total = COALESCE($7, total),
-            installments = COALESCE($8, installments),
-            updated_at = %s
-        WHERE
-            id = $9
-    `, now)
+        UPDATE credits 
+        SET %s
+        WHERE id = $%d
+    `, strings.Join(setClauses, ", "), argID)
 
 	var err error
 	if tx != nil {
-		_, err = s.client.ExecContext(
-			ctx,
-			query,
-			params.ClosingDate,
-			params.DueDate,
-			params.Identifier,
-			params.Entity,
-			params.Type,
-			params.Rate,
-			params.Total,
-			params.Installments,
-			id)
+		_, err = tx.ExecContext(ctx, query, args...)
 	} else {
-		_, err = s.client.ExecContext(
-			ctx,
-			query,
-			params.ClosingDate,
-			params.DueDate,
-			params.Identifier,
-			params.Entity,
-			params.Type,
-			params.Rate,
-			params.Total,
-			params.Installments,
-			id)
+		_, err = s.client.ExecContext(ctx, query, args...)
 	}
 	if err != nil {
 		return err
