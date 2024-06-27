@@ -55,7 +55,7 @@ type UpdateTransaction struct {
 	Value       int32     `json:"value"`
 }
 
-func NewTransactionFromParams(p CreateTransaction) *Transaction {
+func NewTransactionFromParams(p CreateTransaction) (*Transaction, error) {
 	now := time.Now()
 
 	return &Transaction{
@@ -67,5 +67,5 @@ func NewTransactionFromParams(p CreateTransaction) *Transaction {
 		Date:        p.Date,
 		Relevance:   p.Relevance,
 		AccountID:   p.AccountID,
-	}
+	}, nil
 }

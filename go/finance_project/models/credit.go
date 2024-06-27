@@ -86,7 +86,7 @@ type Credit struct {
 	Installments int8      `json:"installments"`
 }
 
-func NewCreditFromParams(p *CreateCredit) *Credit {
+func NewCreditFromParams(p *CreateCredit) (*Credit, error) {
 	now := time.Now()
 
 	return &Credit{
@@ -101,5 +101,5 @@ func NewCreditFromParams(p *CreateCredit) *Credit {
 		Total:        p.Total,
 		Installments: p.Installments,
 		UserID:       p.UserID,
-	}
+	}, nil
 }

@@ -44,7 +44,7 @@ type UpdateAccount struct {
 	Currency Currency `json:"currency"`
 }
 
-func NewAccountFromParams(a *CreateAccount) *Account {
+func NewAccountFromParams(a *CreateAccount) (*Account, error) {
 	now := time.Now()
 
 	return &Account{
@@ -54,5 +54,5 @@ func NewAccountFromParams(a *CreateAccount) *Account {
 		UserID:    a.UserID,
 		Entity:    a.Entity,
 		Currency:  a.Currency,
-	}
+	}, nil
 }
