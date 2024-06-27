@@ -5,20 +5,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-)
 
-const (
-	DBNAME  = "finance"
-	DBURI   = "mongodb://localhost:27017"
-	TDBNAME = "test-finance"
-	TDBURI  = "mongodb://localhost:27017"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Store struct {
 	*sql.DB
-	UserStore   UserStore
-	TxnStore    TransactionStore
-	CreditStore CreditStore
+	UserStore    UserStore
+	AccountStore AccountStore
+	TxnStore     TransactionStore
+	CreditStore  CreditStore
 }
 
 type DBRepo interface {
@@ -29,10 +25,11 @@ type DBRepo interface {
 func NewStore() (*Store, *sql.DB, error) {
 	client := connectSQL()
 	return &Store{
-		DB:          client,
-		UserStore:   NewPGUserStore(client),
-		TxnStore:    NewPGTransactionStore(client),
-		CreditStore: NewPGCreditStore(client),
+		DB:           client,
+		UserStore:    NewPGUserStore(client),
+		TxnStore:     NewPGTransactionStore(client),
+		CreditStore:  NewPGCreditStore(client),
+		AccountStore: NewPGAccountStore(client),
 	}, client, nil
 }
 
@@ -74,14 +71,14 @@ func connectSQL() *sql.DB {
 	// TODO: create config getter
 	dbHost := "localhost"
 	dbPort := "5432"
-	dbName := "your_db_name"
-	dbUser := "your_user"
-	dbPassword := ""
+	dbName := "casita"
+	dbUser := "postgres"
+	dbPasswd := "secret"
 	dbSSL := "disable"
 
 	// Connecto to DB
 	log.Println("Connecting to dabase")
-	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s", dbHost, dbPort, dbName, dbUser, dbPassword, dbSSL)
+	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s", dbHost, dbPort, dbName, dbUser, dbPasswd, dbSSL)
 
 	db, err := sql.Open("pgx", connectionString)
 	if err != nil {
