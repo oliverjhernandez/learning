@@ -154,7 +154,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models
 
 	for rows.Next() {
 		var credit models.Credit
-		err := s.client.QueryRowContext(ctx, query).Scan(
+		err := rows.Scan(
 			&credit.ID,
 			&credit.ClosingDate,
 			&credit.DueDate,
