@@ -123,7 +123,6 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 		)
 	}
 	if err != nil {
-		fmt.Printf("error: %v", err)
 		return credit, err
 	}
 

@@ -113,7 +113,6 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 		)
 	}
 	if err != nil {
-		fmt.Printf("error: %v", err)
 		return txn, err
 	}
 

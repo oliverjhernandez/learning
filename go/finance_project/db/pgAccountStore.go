@@ -144,7 +144,6 @@ func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]mode
 			&account.UpdatedAt,
 		)
 		if err != nil {
-			fmt.Println(err)
 			return nil, err
 		}
 
