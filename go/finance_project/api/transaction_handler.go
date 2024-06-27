@@ -19,6 +19,26 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 	}
 }
 
+func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
+	var params models.CreateTransaction
+	if err := c.BodyParser(&params); err != nil {
+		return ErrInvalidReqBody()
+	}
+
+	// TODO: There should be some validation of the data coming in
+	//
+	// if err := params.Validate(); err != nil {
+	// 	return ErrInvalidParams()
+	// }
+
+	txn := models.NewTransactionFromParams(params)
+	res, err := th.Store.InsertTransaction(c.Context(), nil, txn)
+	if err != nil {
+		return err
+	}
+	return c.JSON(res)
+}
+
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 	txns, err := th.Store.GetAllTransactions(c.Context(), nil)
 	if err != nil {
@@ -40,26 +60,6 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(txn)
-}
-
-func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
-	var params models.CreateTransaction
-	if err := c.BodyParser(&params); err != nil {
-		return ErrInvalidReqBody()
-	}
-
-	// TODO: There should be some validation of the data coming in
-	//
-	// if err := params.Validate(); err != nil {
-	// 	return ErrInvalidParams()
-	// }
-
-	txn := models.NewTransactionFromParams(params)
-	res, err := th.Store.InsertTransaction(c.Context(), nil, txn)
-	if err != nil {
-		return err
-	}
-	return c.JSON(res)
 }
 
 func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
