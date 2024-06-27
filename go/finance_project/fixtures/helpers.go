@@ -93,7 +93,10 @@ func AddTx(app *fiber.App, accID int) (*models.Transaction, error) {
 		AccountID:   accID,
 	}
 
-	newTxn := models.NewTransactionFromParams(params)
+	newTxn, err := models.NewTransactionFromParams(params)
+	if err != nil {
+		return nil, err
+	}
 
 	b, _ := json.Marshal(newTxn)
 
@@ -139,7 +142,10 @@ func AddAccount(app *fiber.App, userID int) (*models.Account, error) {
 		UserID:   userID,
 	}
 
-	acc := models.NewAccountFromParams(&params)
+	acc, err := models.NewAccountFromParams(&params)
+	if err != nil {
+		return nil, err
+	}
 
 	b, _ := json.Marshal(acc)
 	req := httptest.NewRequest("POST", "/account", bytes.NewReader(b))
