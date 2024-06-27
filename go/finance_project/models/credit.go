@@ -28,15 +28,15 @@ type Type int
 
 const (
 	_ = iota
-	LIBRE_INVERSION
+	LIBRE
 	HIPOTECARIO
 	VEHICULO
 )
 
 func (t Type) String() string {
 	switch t {
-	case LIBRE_INVERSION:
-		return "LIBRE INVERSION"
+	case LIBRE:
+		return "LIBRE"
 	case HIPOTECARIO:
 		return "HIPOTECARIO"
 	case VEHICULO:
@@ -46,7 +46,7 @@ func (t Type) String() string {
 	}
 }
 
-type UpdateCreditParams struct {
+type UpdateCredit struct {
 	UpdatedAt    time.Time
 	ClosingDate  time.Time
 	DueDate      time.Time
@@ -56,11 +56,10 @@ type UpdateCreditParams struct {
 	Rate         float32
 	Total        int32
 	Installments int8
+	UserID       int
 }
 
-type CreateCreditParams struct {
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+type CreateCredit struct {
 	ClosingDate  time.Time
 	DueDate      time.Time
 	Identifier   string
@@ -69,6 +68,7 @@ type CreateCreditParams struct {
 	Rate         float32
 	Total        int32
 	Installments int8
+	UserID       int
 }
 
 type Credit struct {
@@ -82,10 +82,11 @@ type Credit struct {
 	Rate         float32
 	Total        int32
 	ID           int
+	UserID       int
 	Installments int8
 }
 
-func NewCreditFromParams(p *CreateCreditParams) *Credit {
+func NewCreditFromParams(p *CreateCredit) *Credit {
 	now := time.Now()
 
 	return &Credit{
@@ -99,5 +100,6 @@ func NewCreditFromParams(p *CreateCreditParams) *Credit {
 		Rate:         p.Rate,
 		Total:        p.Total,
 		Installments: p.Installments,
+		UserID:       p.UserID,
 	}
 }
