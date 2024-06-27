@@ -3,26 +3,29 @@ package models
 import "time"
 
 type User struct {
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	FirstName string
-	LastName  string
-	Email     string
-	Passwd    string
-	ID        int
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	Passwd    string    `json:"-"`
+	IsAdmin   bool      `json:"is_admin"`
+	ID        int       `json:"id"`
 }
 
 type CreateUser struct {
-	FirstName string
-	LastName  string
-	Email     string
-	Passwd    string
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Passwd    string `json:"passwd"`
+	IsAdmin   bool   `json:"is_admin"`
 }
 
 type UpdateUser struct {
-	FirstName string
-	LastName  string
-	Email     string
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	IsAdmin   bool   `json:"is_admin"`
 }
 
 func NewUserFromParams(u CreateUser) *User {
