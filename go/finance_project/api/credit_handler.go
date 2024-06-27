@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"strconv"
 
 	"finance/db"
@@ -22,7 +23,7 @@ func NewCreditHandler(s *db.Store) *CreditHandler {
 func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
 	credits, err := ch.Store.GetAllCredits(c.Context(), nil)
 	if err != nil {
-		return ErrNotFound()
+		return NewError(http.StatusNotFound, NOT_FOUND)
 	}
 
 	return c.JSON(&credits)
@@ -37,7 +38,7 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 
 	credit, err := ch.Store.GetCreditByID(c.Context(), nil, id)
 	if err != nil {
-		return ErrNotFound()
+		return NewError(http.StatusNotFound, NOT_FOUND)
 	}
 	return c.JSON(&credit)
 }
@@ -45,17 +46,20 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 	var params *models.CreateCredit
 	if err := c.BodyParser(&params); err != nil {
-		return ErrInvalidParams()
+		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
 	}
 
-	cred := models.NewCreditFromParams(params)
-
-	_, err := ch.Store.InsertCredit(c.Context(), nil, cred)
+	cred, err := models.NewCreditFromParams(params)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(cred)
+	_, err = ch.Store.InsertCredit(c.Context(), nil, cred)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(map[string]string{"msg": "created"})
 }
 
 func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
@@ -68,11 +72,14 @@ func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&params); err != nil {
+		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+	}
+
+	if err := ch.Store.UpdateCredit(c.Context(), nil, id, &params); err != nil {
 		return err
 	}
 
-	ch.Store.UpdateCredit(c.Context(), nil, id, &params)
-
+	// TODO: Serialize good path responses
 	return c.JSON(map[string]string{"msg": "updated"})
 }
 
@@ -83,7 +90,9 @@ func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	ch.Store.DeleteCreditByID(c.Context(), nil, id)
+	if err := ch.Store.DeleteCreditByID(c.Context(), nil, id); err != nil {
+		return err
+	}
 
 	return c.JSON(map[string]string{"msg": "deleted"})
 }

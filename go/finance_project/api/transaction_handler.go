@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"strconv"
 
 	"finance/db"
@@ -22,7 +23,7 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	var params models.CreateTransaction
 	if err := c.BodyParser(&params); err != nil {
-		return ErrInvalidReqBody()
+		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
 	}
 
 	// TODO: There should be some validation of the data coming in
@@ -31,18 +32,21 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	// 	return ErrInvalidParams()
 	// }
 
-	txn := models.NewTransactionFromParams(params)
-	res, err := th.Store.InsertTransaction(c.Context(), nil, txn)
+	txn, err := models.NewTransactionFromParams(params)
 	if err != nil {
 		return err
 	}
-	return c.JSON(res)
+	_, err = th.Store.InsertTransaction(c.Context(), nil, txn)
+	if err != nil {
+		return err
+	}
+	return c.JSON(map[string]string{"msg": "created"})
 }
 
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 	txns, err := th.Store.GetAllTransactions(c.Context(), nil)
 	if err != nil {
-		return ErrNotFound()
+		return NewError(http.StatusNotFound, NOT_FOUND)
 	}
 	return c.JSON(&txns)
 }
@@ -56,7 +60,7 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 
 	txn, err := th.Store.GetTransactionByID(c.Context(), nil, id)
 	if err != nil {
-		return ErrNotFound()
+		return NewError(http.StatusNotFound, NOT_FOUND)
 	}
 
 	return c.JSON(txn)
@@ -72,7 +76,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&params); err != nil {
-		return ErrInvalidReqBody()
+		return NewError(http.StatusBadRequest, INVALID_REQUEST)
 	}
 
 	if err = th.Store.UpdateTransaction(c.Context(), nil, id, &params); err != nil {
