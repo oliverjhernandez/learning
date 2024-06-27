@@ -11,10 +11,12 @@ import (
 )
 
 var (
-	ts          *fixtures.TestStore
-	app         *fiber.App
-	txHandler   *TransactionHandler
-	userHandler *UserHandler
+	ts             *fixtures.TestStore
+	app            *fiber.App
+	txHandler      *TransactionHandler
+	userHandler    *UserHandler
+	accountHandler *AccountHandler
+	creditHandler  *CreditHandler
 )
 
 func TestMain(m *testing.M) {
