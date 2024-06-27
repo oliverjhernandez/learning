@@ -24,48 +24,6 @@ func (r Relevance) String() string {
 	}
 }
 
-type Currency int
-
-const (
-	_ = iota
-	USD
-	COP
-)
-
-func (c Currency) String() string {
-	switch c {
-	case USD:
-		return "USD"
-	case COP:
-		return "COP"
-	default:
-		return "Unknown"
-	}
-}
-
-type Account int
-
-const (
-	_ = iota
-	SAVINGS
-	CHECKINGS
-	LOAN
-)
-
-func (a Account) String() string {
-	switch a {
-	case SAVINGS:
-		return "SAVINGS"
-	case CHECKINGS:
-		return "CHECKINGS"
-	case LOAN:
-		return "LOAN"
-	default:
-		return "Unknown"
-
-	}
-}
-
 type Transaction struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -108,7 +66,6 @@ func NewTransactionFromParams(p CreateTransaction) *Transaction {
 		Value:       p.Value,
 		Date:        p.Date,
 		Relevance:   p.Relevance,
-		Currency:    p.Currency,
-		Account:     p.Account,
+		AccountID:   p.AccountID,
 	}
 }
