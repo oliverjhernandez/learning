@@ -67,38 +67,34 @@ func (a Account) String() string {
 }
 
 type Transaction struct {
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Concept     string
-	Description string
-	Value       int32
-	Date        int64
-	Relevance   Relevance
-	Currency    Currency
-	Account     Account
-	ID          int
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Date        time.Time `json:"date"`
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Relevance   Relevance `json:"relevance"`
+	AccountID   int       `json:"account_id"`
+	ID          int       `json:"id"`
+	Value       int32     `json:"value"`
 }
 
 type CreateTransaction struct {
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Concept     string
-	Description string
-	Value       int32
-	Date        int64
-	Relevance   Relevance
-	Currency    Currency
-	Account     Account
+	Date        time.Time `json:"date"`
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Relevance   Relevance `json:"relevance"`
+	AccountID   int       `json:"account_id"`
+	Value       int32     `json:"value"`
 }
 
 type UpdateTransaction struct {
-	Concept     string
-	Description string
-	Value       int32
-	Date        int64
-	Relevance   Relevance
-	Currency    Currency
-	Account     Account
+	UpdatedAt   time.Time `json:"updated_at"`
+	Date        time.Time `json:"date"`
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Relevance   Relevance `json:"relevance"`
+	AccountID   int       `json:"account_id"`
+	Value       int32     `json:"value"`
 }
 
 func NewTransactionFromParams(p CreateTransaction) *Transaction {
