@@ -3,9 +3,9 @@ package fixtures
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	"finance/db"
 	"finance/models"
@@ -36,10 +36,66 @@ func NewTestStore() (*TestStore, error) {
 	}, nil
 }
 
-func AddTx(app *fiber.App, params *models.CreateTransaction) (*models.Transaction, error) {
-	tTx := models.NewTransactionFromParams(*params)
+func AddUser(app *fiber.App) (*models.User, error) {
+	params := models.CreateUser{
+		FirstName: "Corina",
+		LastName:  "Pulido",
+		Email:     "corinapulido@gmail.com",
+	}
 
-	b, _ := json.Marshal(tTx)
+	newUser, err := models.NewUserFromParams(&params)
+	if err != nil {
+		return nil, err
+	}
+
+	b, _ := json.Marshal(newUser)
+	req := httptest.NewRequest("POST", "/usr", bytes.NewReader(b))
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := app.Test(req, 1000*3)
+	if err != nil {
+		return nil, err
+	}
+
+	var user models.User
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func GetUser(app *fiber.App, userID int) (*models.User, error) {
+	req := httptest.NewRequest("GET", "/usr/"+string(rune(userID)), nil)
+	req.Header.Add("Content-Type", "application/json")
+
+	var resp *http.Response
+	resp, err := app.Test(req, 1000*3)
+	if err != nil {
+		return nil, err
+	}
+
+	var user models.User
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func AddTx(app *fiber.App, accID int) (*models.Transaction, error) {
+	params := models.CreateTransaction{
+		Concept:     "Alquiler",
+		Description: "Castel D'Aiano",
+		Value:       2250000,
+		Date:        time.Now().Add(time.Hour * 24 * -7),
+		Relevance:   1,
+		AccountID:   accID,
+	}
+
+	newTxn := models.NewTransactionFromParams(params)
+
+	b, _ := json.Marshal(newTxn)
 
 	req := httptest.NewRequest("POST", "/tx", bytes.NewReader(b))
 	req.Header.Add("Content-Type", "application/json")
@@ -49,14 +105,16 @@ func AddTx(app *fiber.App, params *models.CreateTransaction) (*models.Transactio
 		return nil, err
 	}
 
-	var tx models.Transaction
-	json.NewDecoder(resp.Body).Decode(&tx)
+	var txn models.Transaction
+	if err := json.NewDecoder(resp.Body).Decode(&txn); err != nil {
+		return nil, err
+	}
 
-	return &tx, nil
+	return &txn, nil
 }
 
-func GetTx(app *fiber.App, id int) (*models.Transaction, error) {
-	req := httptest.NewRequest("GET", "/tx/"+string(rune(id)), nil)
+func GetTx(app *fiber.App, txnID int) (*models.Transaction, error) {
+	req := httptest.NewRequest("GET", "/tx/"+string(rune(txnID)), nil)
 	req.Header.Add("Content-Type", "application/json")
 
 	var resp *http.Response
@@ -65,23 +123,26 @@ func GetTx(app *fiber.App, id int) (*models.Transaction, error) {
 		return nil, err
 	}
 
-	var respJSON []byte
-	respJSON, err = io.ReadAll(resp.Body)
-	if err != nil {
+	var txn models.Transaction
+	if err := json.NewDecoder(resp.Body).Decode(&txn); err != nil {
 		return nil, err
 	}
 
-	var getTx models.Transaction
-	json.Unmarshal(respJSON, &getTx)
-
-	return &getTx, nil
+	return &txn, nil
 }
 
-func AddUser(app *fiber.App, params *models.CreateUser) (*models.User, error) {
-	tUser := models.NewUserFromParams(*params)
+func AddAccount(app *fiber.App, userID int) (*models.Account, error) {
+	params := models.CreateAccount{
+		Name:     "Main",
+		Entity:   models.BANCOLOMBIA,
+		Currency: models.COP,
+		UserID:   userID,
+	}
 
-	b, _ := json.Marshal(tUser)
-	req := httptest.NewRequest("POST", "/usr", bytes.NewReader(b))
+	acc := models.NewAccountFromParams(&params)
+
+	b, _ := json.Marshal(acc)
+	req := httptest.NewRequest("POST", "/account", bytes.NewReader(b))
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := app.Test(req, 1000*3)
@@ -89,17 +150,16 @@ func AddUser(app *fiber.App, params *models.CreateUser) (*models.User, error) {
 		return nil, err
 	}
 
-	var user *models.User
-	err = json.NewDecoder(resp.Body).Decode(&user)
-	if err != nil {
+	var account models.Account
+	if err := json.NewDecoder(resp.Body).Decode(&account); err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return &account, nil
 }
 
-func GetUser(app *fiber.App, id int) (*models.User, error) {
-	req := httptest.NewRequest("GET", "/usr/"+string(rune(id)), nil)
+func GetAccount(app *fiber.App, accID int) (*models.Account, error) {
+	req := httptest.NewRequest("GET", "/account/"+string(rune(accID)), nil)
 	req.Header.Add("Content-Type", "application/json")
 
 	var resp *http.Response
@@ -108,17 +168,10 @@ func GetUser(app *fiber.App, id int) (*models.User, error) {
 		return nil, err
 	}
 
-	var respJSON []byte
-	respJSON, err = io.ReadAll(resp.Body)
-	if err != nil {
+	var account models.Account
+	if err := json.NewDecoder(resp.Body).Decode(&account); err != nil {
 		return nil, err
 	}
 
-	var getUser models.User
-	err = json.Unmarshal(respJSON, &getUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return &getUser, nil
+	return &account, nil
 }
