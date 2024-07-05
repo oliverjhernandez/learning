@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"finance/models"
+	"casita/models"
 )
 
 type TransactionStore interface {

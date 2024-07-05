@@ -1,4 +1,4 @@
-module finance
+module casita
 
 go 1.22.3
 

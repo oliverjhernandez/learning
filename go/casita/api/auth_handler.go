@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"finance/db"
-	"finance/models"
+	"casita/db"
+	"casita/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"

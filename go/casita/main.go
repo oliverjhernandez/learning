@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"finance/api"
-	"finance/db"
+	"casita/api"
+	"casita/db"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,9 +18,9 @@ func main() {
 	defer client.Close()
 
 	var (
-		config     = fiber.Config{ErrorHandler: api.ErrorHandler}
-		app        = fiber.New(config)
-		listenAddr = flag.String("listenAddr", ":3000", "The listen address of the API server")
+		fiberCconfig = fiber.Config{ErrorHandler: api.ErrorHandler}
+		fiberApp     = fiber.New(fiberCconfig)
+		listenAddr   = flag.String("listenAddr", ":3000", "The listen address of the API server")
 
 		// Handlers
 		// TODO: restrict each handler ot its specific store
@@ -31,13 +31,14 @@ func main() {
 		authHandler    = api.NewAuthHandler(stores)
 
 		// appv1 := app.Group("/v1")
-		appv1 = app.Group("/v1", api.JWTAuthentication(stores.UserStore))
-		auth  = app.Group("/api")
+		appv1 = fiberApp.Group("/v1", api.JWTAuthentication(stores.UserStore))
+		api   = fiberApp.Group("/api")
 		// admin = appv1.Group("/admin", api.AdminAuth)
 	)
 
+	// TODO: Get all routes from a method outside the main function
 	// Auth
-	auth.Post("/auth", authHandler.HandleAuthenticate)
+	api.Post("/auth", authHandler.HandleAuthenticate)
 
 	// Transaction CRUD Endpoints
 	appv1.Get("/transaction", txHandler.HandlerGetTransactions)
@@ -67,5 +68,5 @@ func main() {
 	appv1.Delete("/account/:id", accountHandler.HandlerDeleteAccount)
 	appv1.Patch("/account/:id", accountHandler.HandlerUpdateAccount)
 
-	app.Listen(*listenAddr)
+	fiberApp.Listen(*listenAddr)
 }
