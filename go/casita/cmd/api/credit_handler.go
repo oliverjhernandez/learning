@@ -20,79 +20,96 @@ func NewCreditHandler(s *db.Store) *CreditHandler {
 	}
 }
 
-func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) {
 	credits, err := ch.Store.GetAllCredits(c.Context(), nil)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
 
-	return c.JSON(&credits)
+	err = writeJSON(c, http.StatusOK, "got you", credits, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	credit, err := ch.Store.GetCreditByID(c.Context(), nil, id)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
-	return c.JSON(&credit)
+
+	err = writeJSON(c, http.StatusOK, "got you", credit, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) {
 	var params *models.CreateCredit
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+		badRequestError(c)
 	}
 
 	cred, err := models.NewCreditFromParams(params)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
-	_, err = ch.Store.InsertCredit(c.Context(), nil, cred)
+	credResp, err := ch.Store.InsertCredit(c.Context(), nil, cred)
 	if err != nil {
-		return err
+		internalServerError(c)
 	}
 
-	return c.JSON(map[string]string{"msg": "created"})
+	err = writeJSON(c, http.StatusOK, "got you", credResp, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) {
 	var params models.UpdateCredit
 
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+		badRequestError(c)
 	}
 
-	if err := ch.Store.UpdateCredit(c.Context(), nil, id, &params); err != nil {
-		return err
+	credResp, err := ch.Store.UpdateCredit(c.Context(), nil, id, &params)
+	if err != nil {
+		internalServerError(c)
 	}
 
-	// TODO: Serialize good path responses
-	return c.JSON(map[string]string{"msg": "updated"})
+	// TODO: Standardize messages
+	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := ch.Store.DeleteCreditByID(c.Context(), nil, id); err != nil {
-		return err
+		internalServerError(c)
 	}
 
-	return c.JSON(map[string]string{"msg": "deleted"})
+	err = writeJSON(c, http.StatusOK, "resource deleted", nil, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
