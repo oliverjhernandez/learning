@@ -20,75 +20,95 @@ func NewUserHandler(s *db.Store) *UserHandler {
 	}
 }
 
-func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
+func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) {
 	var params models.CreateUser
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+		badRequestError(c)
 	}
 
 	user, err := models.NewUserFromParams(&params)
 	if err != nil {
-		return NewError(http.StatusBadRequest, INVALID_REQUEST)
+		badRequestError(c)
 	}
 
-	_, err = uh.Store.InsertUser(c.Context(), nil, user)
+	userResp, err := uh.Store.InsertUser(c.Context(), nil, user)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
 
-	return c.JSON(map[string]string{"msg": "created"})
+	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
+func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) {
 	users, err := uh.Store.GetAllUsers(c.Context(), nil)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
-	return c.JSON(users)
+
+	err = writeJSON(c, http.StatusOK, "resource created successfully", users, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
+func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	user, err := uh.Store.GetUserByID(c.Context(), nil, id)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		badRequestError(c)
 	}
-	return c.JSON(user)
+
+	err = writeJSON(c, http.StatusOK, "resource created successfully", user, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
-	strID := c.Params("id")
-	id, err := strconv.Atoi(strID)
-	if err != nil {
-		return err
-	}
-
+func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) {
 	var params models.UpdateUser
-	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_REQUEST)
-	}
 
-	if err := uh.Store.UpdateUser(c.Context(), nil, id, &params); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
+	}
+
+	if err := c.BodyParser(&params); err != nil {
+		badRequestError(c)
+	}
+
+	userResp, err := uh.Store.UpdateUser(c.Context(), nil, id, &params)
+	if err != nil {
+		internalServerError(c)
+	}
+
+	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, "")
+	if err != nil {
+		internalServerError(c)
+	}
+}
+
+func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) {
+	strID := c.Params("id")
+	id, err := strconv.Atoi(strID)
+	if err != nil {
+		badRequestError(c)
 	}
 
 	if err := uh.Store.DeleteUserByID(c.Context(), nil, id); err != nil {
-		return err
+		internalServerError(c)
 	}
 
-	return nil
+	err = writeJSON(c, http.StatusOK, "resource deleted successfully", nil, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
