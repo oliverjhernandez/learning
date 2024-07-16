@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"casita/api"
+	"casita/cmd/api"
 	"casita/db"
 
 	"github.com/gofiber/fiber/v2"

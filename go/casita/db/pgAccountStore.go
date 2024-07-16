@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"finance/models"
+	"casita/models"
 )
 
 type AccountStore interface {

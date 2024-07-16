@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"finance/models"
+	"casita/models"
 )
 
 type UserStore interface {
-	// TODO: Inject context instead of creating it in each method
 	InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (int, error)
 	GetUserByID(ctx context.Context, tx *sql.Tx, id int) (models.User, error)
 	GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (models.User, error)
