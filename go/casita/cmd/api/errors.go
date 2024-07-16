@@ -1,73 +1,45 @@
 package api
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type ErrorCode int
-
-const (
-	_ = iota
-	UNAUTHORIZED
-	NOT_FOUND
-	INVALID_PARAMETERS
-	INVALID_ID
-	INVALID_REQUEST
-	INTERNAL_ERROR
-	TOKEN_EXPIRED
-	INVALID_TOKEN
-)
-
-func (e ErrorCode) String() string {
-	switch e {
-	case UNAUTHORIZED:
-		return "UNAUTHORIZED"
-	case NOT_FOUND:
-		return "NOT_FOUND"
-	case INVALID_PARAMETERS:
-		return "INVALID_PARAMETERS"
-	case INVALID_ID:
-		return "INVALID_ID"
-	case INVALID_REQUEST:
-		return "INVALID_REQUEST"
-	case INTERNAL_ERROR:
-		return "INTERNAL_ERROR"
-	case TOKEN_EXPIRED:
-		return "TOKEN_EXPIRED"
-	case INVALID_TOKEN:
-		return "INVALID_TOKEN"
-	default:
-		return "UNKNOWN"
+func NewError(c *fiber.Ctx, status int, error string) {
+	err := Envelope{
+		Status: strconv.Itoa(status),
+		Error:  error,
 	}
+
+	c.Response().Header.Add("Content-Type", "application/json")
+
+	c.Status(status).JSON(err)
 }
 
-func (e ErrorCode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(e.String())
+func internalServerError(c *fiber.Ctx) {
+	message := "the server encountered a problem and could not process your request"
+	NewError(c, http.StatusInternalServerError, message)
 }
 
-type Error struct {
-	ErrMessage ErrorCode `json:"error"`
-	StatusCode int       `json:"status_code"`
+func notFoundError(c *fiber.Ctx) {
+	message := "the resource you requested could not be found"
+	NewError(c, http.StatusNotFound, message)
 }
 
-func ErrorHandler(c *fiber.Ctx, err error) error {
-	if apiError, ok := err.(Error); ok {
-		return c.Status(apiError.StatusCode).JSON(apiError)
-	}
-	apiError := NewError(http.StatusInternalServerError, INTERNAL_ERROR)
-	return c.Status(apiError.StatusCode).JSON(apiError)
+func methodNotAllowedError(c *fiber.Ctx) {
+	message := fmt.Sprintf("the %s method is not supported for this resource", c.Method())
+	NewError(c, http.StatusMethodNotAllowed, message)
 }
 
-func (e Error) Error() string {
-	return e.ErrMessage.String()
+func badRequestError(c *fiber.Ctx) {
+	message := "the server was unable to process the request"
+	NewError(c, http.StatusBadRequest, message)
 }
 
-func NewError(statusCode int, error ErrorCode) Error {
-	return Error{
-		StatusCode: statusCode,
-		ErrMessage: error,
-	}
+func editConflictError(c *fiber.Ctx) {
+	message := "unable to update the record due to an edit conflict, please try again"
+	NewError(c, http.StatusConflict, message)
 }
