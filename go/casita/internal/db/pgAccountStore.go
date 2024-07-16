@@ -176,7 +176,7 @@ func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, 
 
 	var err error
 	if tx != nil {
-		err = s.client.QueryRowContext(
+		err = tx.QueryRowContext(
 			ctx,
 			query,
 			params.Name,
