@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"casita/db"
+	"casita/internal/db"
 
 	"github.com/golang-jwt/jwt/v5"
 

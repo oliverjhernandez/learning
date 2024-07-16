@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"casita/models"
+	"casita/internal/data"
 
 	"github.com/gofiber/fiber/v2"
 )

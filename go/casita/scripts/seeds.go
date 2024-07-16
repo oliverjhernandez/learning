@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"casita/db"
-	"casita/models"
+	"casita/internal/data"
+	"casita/internal/db"
 )
 
 var (

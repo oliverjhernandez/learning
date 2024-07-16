@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"casita/cmd/api"
-	"casita/db"
+	"casita/internal/db"
 
 	"github.com/gofiber/fiber/v2"
 )
