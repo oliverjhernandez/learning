@@ -5,14 +5,16 @@ import (
 	"database/sql"
 	"time"
 
-	"casita/models"
+	"casita/internal/data"
 )
 
+// TODO: Improve the errors passed to the layer above
+
 type AccountStore interface {
-	InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (int, error)
+	InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (*models.Account, error)
 	GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (models.Account, error)
 	GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]models.Account, error)
-	UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) error
+	UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) (*models.Account, error)
 	DeleteAccountByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -26,19 +28,18 @@ func NewPGAccountStore(client *sql.DB) *PGAccountStore {
 	}
 }
 
-func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (int, error) {
+func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (*models.Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var newID int
 
 	query := `
-            INSERT into accounts 
-              (name, user_id, entity, currency, created_at, updated_at)
-            VALUES 
-              ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-    `
+    INSERT into accounts
+      (name, user_id, entity, currency, created_at, updated_at)
+    VALUES
+      ($1, $2, $3, $4, $5, $6)
+    RETURNING id`
 
 	var err error
 	if tx != nil {
@@ -61,17 +62,22 @@ func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account 
 		).Scan(&newID)
 	}
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return newID, nil
+	acc, err := s.GetAccountByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return acc, nil
 }
 
-func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (models.Account, error) {
+func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*models.Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var account models.Account
+	var acc models.Account
 
 	query := `
             SELECT 
@@ -82,30 +88,30 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 	var err error
 	if tx != nil {
 		err = s.client.QueryRowContext(ctx, query, id).Scan(
-			&account.ID,
-			&account.Name,
-			&account.UserID,
-			&account.Entity,
-			&account.Currency,
+			&acc.ID,
+			&acc.Name,
+			&acc.UserID,
+			&acc.Entity,
+			&acc.Currency,
 			time.Now(),
 			time.Now(),
 		)
 	} else {
 		err = s.client.QueryRowContext(ctx, query, id).Scan(
-			&account.ID,
-			&account.Name,
-			&account.UserID,
-			&account.Entity,
-			&account.Currency,
+			&acc.ID,
+			&acc.Name,
+			&acc.UserID,
+			&acc.Entity,
+			&acc.Currency,
 			time.Now(),
 			time.Now(),
 		)
 	}
 	if err != nil {
-		return account, err
+		return &acc, err
 	}
 
-	return account, nil
+	return &acc, nil
 }
 
 func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]models.Account, error) {
@@ -152,11 +158,12 @@ func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]mode
 	return accounts, nil
 }
 
-func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) error {
+func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) (*models.Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
+	var newID int
 
 	query := `
         UPDATE accounts SET 
@@ -169,36 +176,41 @@ func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, 
 
 	var err error
 	if tx != nil {
-		_, err = s.client.ExecContext(
+		err = s.client.QueryRowContext(
 			ctx,
 			query,
 			params.Name,
 			params.Entity,
 			params.Currency,
 			now,
-			id)
+			id).Scan(&newID)
 	} else {
-		_, err = s.client.ExecContext(
+		err = s.client.QueryRowContext(
 			ctx,
 			query,
 			params.Name,
 			params.Entity,
 			params.Currency,
 			now,
-			id)
+			id).Scan(&newID)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	acc, err := s.GetAccountByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return acc, nil
 }
 
 func (s *PGAccountStore) DeleteAccountByID(ctx context.Context, tx *sql.Tx, id int) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM accounts WHERE id = $1"
+	query := `DELETE FROM accounts WHERE id = $1`
 
 	var err error
 	if tx != nil {

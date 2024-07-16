@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"casita/models"
+	"casita/internal/data"
 )
 
 type CreditStore interface {
