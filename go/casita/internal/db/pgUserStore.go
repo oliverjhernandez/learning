@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os/user"
 	"strings"
 	"time"
 
@@ -11,11 +12,11 @@ import (
 )
 
 type UserStore interface {
-	InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (int, error)
-	GetUserByID(ctx context.Context, tx *sql.Tx, id int) (models.User, error)
-	GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (models.User, error)
-	GetAllUsers(ctx context.Context, tx *sql.Tx) ([]models.User, error)
-	UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) error
+	InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (*models.User, error)
+	GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*models.User, error)
+	GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*models.User, error)
+	GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.User, error)
+	UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) (*models.User, error)
 	DeleteUserByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -29,19 +30,18 @@ func NewPGUserStore(client *sql.DB) *PGUserStore {
 	}
 }
 
-func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (int, error) {
+func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var newID int
 
 	query := `
-            INSERT into users 
-                (first_name, last_name, email, passwd, is_admin, created_at, updated_at)
-            VALUES 
-                ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id
-    `
+    INSERT into users 
+      (first_name, last_name, email, passwd, is_admin, created_at, updated_at)
+    VALUES 
+      ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id`
 
 	var err error
 	if tx != nil {
@@ -66,23 +66,27 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.U
 		).Scan(&newID)
 	}
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return newID, nil
+	userResp, err := s.GetUserByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userResp, nil
 }
 
-func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (models.User, error) {
+func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var user models.User
 
 	query := `
-            SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
-            FROM users
-            WHERE id=$1
-    `
+    SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
+    FROM users
+    WHERE id=$1`
 
 	var err error
 	if tx != nil {
@@ -109,23 +113,22 @@ func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (mode
 		)
 	}
 	if err != nil {
-		return user, err
+		return &user, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
-func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (models.User, error) {
+func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var user models.User
 
 	query := `
-            SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
-            FROM users
-            WHERE email=$1
-    `
+    SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
+    FROM users
+    WHERE email=$1`
 
 	var err error
 	if tx != nil {
@@ -152,17 +155,17 @@ func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email stri
 		)
 	}
 	if err != nil {
-		return user, err
+		return &user, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
-func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]models.User, error) {
+func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var users []models.User
+	var users []*models.User
 
 	query := `
             SELECT id, first_name, last_name, email, is_admin, created_at, updated_at
@@ -196,17 +199,18 @@ func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]models.Use
 			return users, err
 		}
 
-		users = append(users, user)
+		users = append(users, &user)
 	}
 
 	return users, nil
 }
 
-func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) error {
+func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
+	var newID int
 
 	setClauses := []string{}
 	args := []interface{}{}
@@ -247,22 +251,27 @@ func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params
 
 	var err error
 	if tx != nil {
-		_, err = tx.ExecContext(ctx, query, args...)
+		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	} else {
-		_, err = s.client.ExecContext(ctx, query, args...)
+		err = s.client.QueryRowContext(ctx, query, args...).Scan(&newID)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	userResp, err := s.GetUserByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userResp, nil
 }
 
 func (s *PGUserStore) DeleteUserByID(ctx context.Context, tx *sql.Tx, id int) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM users WHERE id = $1"
+	query := `DELETE FROM users WHERE id = $1`
 
 	var err error
 	if tx != nil {
