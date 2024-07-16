@@ -20,76 +20,95 @@ func NewAccountHandler(s *db.Store) *AccountHandler {
 	}
 }
 
-func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) {
 	var params *models.CreateAccount
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+		badRequestError(c)
 	}
 
 	acc, err := models.NewAccountFromParams(params)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
-	_, err = ah.Store.InsertAccount(c.Context(), nil, acc)
+	acc, err = ah.Store.InsertAccount(c.Context(), nil, acc)
 	if err != nil {
-		return err
+		internalServerError(c)
 	}
 
-	return c.JSON(map[string]string{"msg": "updated"})
+	err = writeJSON(c, http.StatusOK, "resource created successfully", acc, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ah *AccountHandler) HandlerGetAccounts(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerGetAccounts(c *fiber.Ctx) {
 	accs, err := ah.Store.GetAllAccounts(c.Context(), nil)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
-	return c.JSON(accs)
+
+	err = writeJSON(c, http.StatusOK, "got you", accs, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ah *AccountHandler) HandlerGetAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerGetAccount(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	acc, err := ah.Store.GetAccountByID(c.Context(), nil, id)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
 
-	return c.JSON(acc)
+	err = writeJSON(c, http.StatusOK, "got you", acc, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ah *AccountHandler) HandlerUpdateAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerUpdateAccount(c *fiber.Ctx) {
 	var params models.UpdateAccount
 
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_REQUEST)
+		badRequestError(c)
 	}
 
-	if err = ah.Store.UpdateAccount(c.Context(), nil, id, &params); err != nil {
-		return err
+	acc, err := ah.Store.UpdateAccount(c.Context(), nil, id, &params)
+	if err != nil {
+		editConflictError(c)
 	}
-	return c.JSON(map[string]string{"msg": "updated"})
+
+	err = writeJSON(c, http.StatusOK, "updated successfully", acc, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (ah *AccountHandler) HandlerDeleteAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerDeleteAccount(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := ah.Store.DeleteAccountByID(c.Context(), nil, id); err != nil {
-		return err
+		internalServerError(c)
 	}
-	return c.JSON(map[string]string{"msg": "deleted"})
+
+	err = writeJSON(c, http.StatusOK, "resource deleted", nil, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
