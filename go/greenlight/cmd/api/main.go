@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"greenlight/internal/data"
+	"greenlight/internal/jsonlog"
 
 	_ "github.com/lib/pq"
 )
@@ -27,7 +28,7 @@ type config struct {
 }
 
 type application struct {
-	logger *log.Logger
+	logger *jsonlog.Logger
 	config config
 	models data.Models
 }
