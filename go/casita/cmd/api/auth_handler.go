@@ -38,26 +38,19 @@ type genericResponse struct {
 	Msg  string `json:"msg"`
 }
 
-func invalidCredentials(c *fiber.Ctx) error {
-	return c.Status(http.StatusBadRequest).JSON(genericResponse{
-		Type: "error",
-		Msg:  "invalid credentials",
-	})
-}
-
-func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
+func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) {
 	var params AuthParams
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		invalidCredentials(c)
 	}
 
 	user, err := ah.userStore.GetUserByEmail(c.Context(), nil, params.Email)
 	if err != nil {
-		return err
+		invalidCredentials(c)
 	}
 
 	if !models.IsValidPasswd(user.Passwd, params.Passwd) {
-		return invalidCredentials(c)
+		invalidCredentials(c)
 	}
 
 	// TODO: Should be better to send this in HTTP headers
@@ -67,7 +60,11 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	}
 
 	fmt.Println("Authenticated -> ", user.FirstName)
-	return c.JSON(resp)
+
+	err = writeJSON(c, http.StatusOK, "authenticated", resp, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
 func CreateTokenFromUser(user *models.User) string {
