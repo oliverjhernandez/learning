@@ -43,3 +43,13 @@ func editConflictError(c *fiber.Ctx) {
 	message := "unable to update the record due to an edit conflict, please try again"
 	NewError(c, http.StatusConflict, message)
 }
+
+func unauthorizedError(c *fiber.Ctx) {
+	message := "unauthorized access"
+	NewError(c, http.StatusUnauthorized, message)
+}
+
+func invalidCredentials(c *fiber.Ctx) {
+	message := "invalid credentials"
+	NewError(c, http.StatusUnauthorized, message)
+}
