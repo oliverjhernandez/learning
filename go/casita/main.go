@@ -20,7 +20,7 @@ func main() {
 	var (
 		fiberCconfig = fiber.Config{ErrorHandler: api.ErrorHandler}
 		fiberApp     = fiber.New(fiberCconfig)
-		listenAddr   = flag.String("listenAddr", ":3000", "The listen address of the API server")
+		listenAddr   = flag.String("listenAddr", ":4000", "The listen address of the API server")
 
 		// Handlers
 		// TODO: restrict each handler ot its specific store
