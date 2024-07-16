@@ -11,10 +11,10 @@ import (
 )
 
 type CreditStore interface {
-	InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (int, error)
-	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error)
-	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models.Credit, error)
-	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) error
+	InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (*models.Credit, error)
+	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*models.Credit, error)
+	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*models.Credit, error)
+	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) (*models.Credit, error)
 	DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -28,7 +28,7 @@ func NewPGCreditStore(client *sql.DB) *PGCreditStore {
 	}
 }
 
-func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (int, error) {
+func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (*models.Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -73,13 +73,18 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 		).Scan(&newID)
 	}
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return newID, nil
+	cred, err := s.GetCreditByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return cred, nil
 }
 
-func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (models.Credit, error) {
+func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*models.Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -123,17 +128,17 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 		)
 	}
 	if err != nil {
-		return credit, err
+		return nil, err
 	}
 
-	return credit, nil
+	return &credit, nil
 }
 
-func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models.Credit, error) {
+func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*models.Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var credits []models.Credit
+	var credits []*models.Credit
 
 	query := `
             SELECT 
@@ -168,20 +173,21 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]models
 			&credit.UpdatedAt,
 		)
 		if err != nil {
-			return credits, err
+			return nil, err
 		}
 
-		credits = append(credits, credit)
+		credits = append(credits, &credit)
 	}
 
 	return credits, nil
 }
 
-func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) error {
+func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) (*models.Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
+	var newID int
 
 	setClauses := []string{}
 	args := []interface{}{}
@@ -247,22 +253,27 @@ func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, pa
 
 	var err error
 	if tx != nil {
-		_, err = tx.ExecContext(ctx, query, args...)
+		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	} else {
-		_, err = s.client.ExecContext(ctx, query, args...)
+		err = s.client.QueryRowContext(ctx, query, args...).Scan(&newID)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	cred, err := s.GetCreditByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return cred, nil
 }
 
 func (s *PGCreditStore) DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM credits WHERE id = $1"
+	query := `DELETE FROM credits WHERE id = $1`
 
 	var err error
 	if tx != nil {
