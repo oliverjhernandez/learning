@@ -11,10 +11,10 @@ import (
 )
 
 type TransactionStore interface {
-	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (int, error)
-	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (models.Transaction, error)
-	GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]models.Transaction, error)
-	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) error
+	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error)
+	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
+	GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error)
+	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error)
 	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -28,23 +28,22 @@ func NewPGTransactionStore(client *sql.DB) *PGTransactionStore {
 	}
 }
 
-func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (int, error) {
+func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var newID int
 
 	query := `
-            INSERT into transactions 
-                (concept, description, value, date, relevance, account_id, created_at, updated_at)
-            values 
-                ($1, $2, $3, $4, $5, $6, $7, $8)
-            returning id
-    `
+    INSERT into transactions 
+      (concept, description, value, date, relevance, account_id, created_at, updated_at)
+    VALUES 
+      ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING id`
 
 	var err error
 	if tx != nil {
-		err = s.client.QueryRowContext(ctx, query,
+		err = tx.QueryRowContext(ctx, query,
 			txn.Concept,
 			txn.Description,
 			txn.Value,
@@ -67,24 +66,28 @@ func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, 
 		).Scan(&newID)
 	}
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return newID, nil
+	tran, err := s.GetTransactionByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return tran, nil
 }
 
-func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (models.Transaction, error) {
+func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var txn models.Transaction
 
 	query := `
-            SELECT 
-                id, concept, description, value, date, relevance, account_id, created_at, updated_at
-            FROM transactions
-            WHERE id=$1
-    `
+    SELECT 
+      id, concept, description, value, date, relevance, account_id, created_at, updated_at
+    FROM transactions
+    WHERE id=$1`
 
 	var err error
 	if tx != nil {
@@ -113,17 +116,17 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 		)
 	}
 	if err != nil {
-		return txn, err
+		return &txn, err
 	}
 
-	return txn, nil
+	return &txn, nil
 }
 
-func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]models.Transaction, error) {
+func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var txns []models.Transaction
+	var txns []*models.Transaction
 
 	query := `
             SELECT 
@@ -160,17 +163,18 @@ func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx)
 			return nil, err
 		}
 
-		txns = append(txns, txn)
+		txns = append(txns, &txn)
 	}
 
 	return txns, nil
 }
 
-func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) error {
+func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	now := time.Now()
+	var newID int
 
 	setClauses := []string{}
 	args := []interface{}{}
@@ -221,22 +225,27 @@ func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, 
 
 	var err error
 	if tx != nil {
-		_, err = tx.ExecContext(ctx, query, args...)
+		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	} else {
-		_, err = s.client.ExecContext(ctx, query, args...)
+		err = s.client.QueryRowContext(ctx, query, args...).Scan(&newID)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	txn, err := s.GetTransactionByID(ctx, nil, newID)
+	if err != nil {
+		return nil, err
+	}
+
+	return txn, nil
 }
 
 func (s *PGTransactionStore) DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM transactions WHERE id = $1"
+	query := `DELETE FROM transactions WHERE id = $1`
 
 	var err error
 	if tx != nil {
