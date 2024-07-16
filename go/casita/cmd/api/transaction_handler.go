@@ -20,10 +20,10 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 	}
 }
 
-func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) {
 	var params models.CreateTransaction
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_PARAMETERS)
+		badRequestError(c)
 	}
 
 	// TODO: There should be some validation of the data coming in
@@ -34,66 +34,86 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 
 	txn, err := models.NewTransactionFromParams(params)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
-	_, err = th.Store.InsertTransaction(c.Context(), nil, txn)
+	tran, err := th.Store.InsertTransaction(c.Context(), nil, txn)
 	if err != nil {
-		return err
+		internalServerError(c)
 	}
-	return c.JSON(map[string]string{"msg": "created"})
+
+	err = writeJSON(c, http.StatusOK, "resource created successfully", tran, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) {
 	txns, err := th.Store.GetAllTransactions(c.Context(), nil)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
-	return c.JSON(&txns)
+
+	err = writeJSON(c, http.StatusOK, "got you", &txns, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	txn, err := th.Store.GetTransactionByID(c.Context(), nil, id)
 	if err != nil {
-		return NewError(http.StatusNotFound, NOT_FOUND)
+		notFoundError(c)
 	}
 
-	return c.JSON(txn)
+	err = writeJSON(c, http.StatusOK, "got you", &txn, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) {
 	var params models.UpdateTransaction
 
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := c.BodyParser(&params); err != nil {
-		return NewError(http.StatusBadRequest, INVALID_REQUEST)
+		badRequestError(c)
 	}
 
-	if err = th.Store.UpdateTransaction(c.Context(), nil, id, &params); err != nil {
-		return err
+	tran, err := th.Store.UpdateTransaction(c.Context(), nil, id, &params)
+	if err != nil {
+		internalServerError(c)
 	}
-	return c.JSON(map[string]string{"msg": "updated"})
+
+	err = writeJSON(c, http.StatusOK, "resource updated successfully", &tran, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
 
-func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		return err
+		badRequestError(c)
 	}
 
 	if err := th.Store.DeleteTransactionByID(c.Context(), nil, id); err != nil {
-		return err
+		internalServerError(c)
 	}
-	return c.JSON(map[string]string{"msg": "deleted"})
+
+	err = writeJSON(c, http.StatusOK, "resorce deleted successfully", nil, "")
+	if err != nil {
+		internalServerError(c)
+	}
 }
