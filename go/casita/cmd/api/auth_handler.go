@@ -38,25 +38,28 @@ type genericResponse struct {
 	Msg  string `json:"msg"`
 }
 
-func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) {
+func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	var params AuthParams
 	if err := c.BodyParser(&params); err != nil {
 		invalidCredentials(c)
+		return err
 	}
 
 	user, err := ah.userStore.GetUserByEmail(c.Context(), nil, params.Email)
 	if err != nil {
 		invalidCredentials(c)
+		return err
 	}
 
 	if !models.IsValidPasswd(user.Passwd, params.Passwd) {
 		invalidCredentials(c)
+		return err
 	}
 
 	// TODO: Should be better to send this in HTTP headers
 	resp := AuthResponse{
-		User:  &user,
-		Token: CreateTokenFromUser(&user),
+		User:  user,
+		Token: CreateTokenFromUser(user),
 	}
 
 	fmt.Println("Authenticated -> ", user.FirstName)
@@ -64,7 +67,10 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) {
 	err = writeJSON(c, http.StatusOK, "authenticated", resp, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
 
 func CreateTokenFromUser(user *models.User) string {
