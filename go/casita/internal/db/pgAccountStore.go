@@ -12,8 +12,8 @@ import (
 
 type AccountStore interface {
 	InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (*models.Account, error)
-	GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (models.Account, error)
-	GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]models.Account, error)
+	GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*models.Account, error)
+	GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*models.Account, error)
 	UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) (*models.Account, error)
 	DeleteAccountByID(ctx context.Context, tx *sql.Tx, id int) error
 }
@@ -114,11 +114,11 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 	return &acc, nil
 }
 
-func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]models.Account, error) {
+func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*models.Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var accounts []models.Account
+	var accounts []*models.Account
 
 	query := `
             SELECT 
@@ -152,7 +152,7 @@ func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]mode
 			return nil, err
 		}
 
-		accounts = append(accounts, account)
+		accounts = append(accounts, &account)
 	}
 
 	return accounts, nil
