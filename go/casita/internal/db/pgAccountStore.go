@@ -80,11 +80,10 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 	var acc models.Account
 
 	query := `
-            SELECT 
-              (name, id, user_id, entity, currency, created_at, updated_at)
-            from accounts
-            WHERE
-            id=$1`
+    SELECT id, name, user_id, entity, currency, created_at, updated_at
+    FROM accounts
+    WHERE id=$1`
+
 	var err error
 	if tx != nil {
 		err = s.client.QueryRowContext(ctx, query, id).Scan(
@@ -93,8 +92,8 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 			&acc.UserID,
 			&acc.Entity,
 			&acc.Currency,
-			time.Now(),
-			time.Now(),
+			&acc.CreatedAt,
+			&acc.UpdatedAt,
 		)
 	} else {
 		err = s.client.QueryRowContext(ctx, query, id).Scan(
@@ -103,8 +102,8 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 			&acc.UserID,
 			&acc.Entity,
 			&acc.Currency,
-			time.Now(),
-			time.Now(),
+			&acc.CreatedAt,
+			&acc.UpdatedAt,
 		)
 	}
 	if err != nil {
