@@ -18,24 +18,30 @@ func JWTAuthentication(userStore db.UserStore) fiber.Handler {
 
 		token := c.Get("X-Api-Token")
 		if len(token) == 0 {
-			unauthorizedError(c)
+			err := unauthorizedError(c)
+			return err
 		}
 		claims, err := validateToken(token)
 		if err != nil {
-			unauthorizedError(c)
+			err := unauthorizedError(c)
+			return err
 		}
 
-		// Check token expiration
+		// Checks token expiration
+		fmt.Println(claims)
 		expiresFloat := claims["expires"].(float64)
 		expires := int64(expiresFloat)
 		if time.Now().Unix() > expires {
-			unauthorizedError(c)
+			err := unauthorizedError(c)
+			return err
 		}
 
 		userID := claims["id"].(float64)
 		user, err := userStore.GetUserByID(c.Context(), nil, int(userID))
 		if err != nil {
-			unauthorizedError(c)
+			err := unauthorizedError(c)
+			return err
+
 		}
 		c.Context().SetUserValue("user", user)
 
