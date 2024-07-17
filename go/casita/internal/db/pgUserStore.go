@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os/user"
 	"strings"
 	"time"
 
@@ -74,7 +73,7 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.U
 		return nil, err
 	}
 
-	return &userResp, nil
+	return userResp, nil
 }
 
 func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*models.User, error) {
@@ -264,7 +263,7 @@ func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params
 		return nil, err
 	}
 
-	return &userResp, nil
+	return userResp, nil
 }
 
 func (s *PGUserStore) DeleteUserByID(ctx context.Context, tx *sql.Tx, id int) error {
