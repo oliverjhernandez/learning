@@ -20,96 +20,122 @@ func NewCreditHandler(s *db.Store) *CreditHandler {
 	}
 }
 
-func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) {
+func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
 	credits, err := ch.Store.GetAllCredits(c.Context(), nil)
 	if err != nil {
 		notFoundError(c)
+		return err
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credits, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
 
-func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) {
+func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	credit, err := ch.Store.GetCreditByID(c.Context(), nil, id)
 	if err != nil {
 		notFoundError(c)
+		return err
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credit, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
 
-func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) {
+func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 	var params *models.CreateCredit
 	if err := c.BodyParser(&params); err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	cred, err := models.NewCreditFromParams(params)
 	if err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	credResp, err := ch.Store.InsertCredit(c.Context(), nil, cred)
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credResp, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
 
-func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) {
+func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
 	var params models.UpdateCredit
 
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	if err := c.BodyParser(&params); err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	credResp, err := ch.Store.UpdateCredit(c.Context(), nil, id, &params)
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
 
 	// TODO: Standardize messages
 	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
 
-func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) {
+func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
 	strID := c.Params("id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
 		badRequestError(c)
+		return err
 	}
 
 	if err := ch.Store.DeleteCreditByID(c.Context(), nil, id); err != nil {
 		internalServerError(c)
+		return err
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource deleted", nil, "")
 	if err != nil {
 		internalServerError(c)
+		return err
 	}
+
+	return nil
 }
