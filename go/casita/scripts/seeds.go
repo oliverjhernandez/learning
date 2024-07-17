@@ -42,25 +42,25 @@ func seed() {
 		Passwd:    "test123",
 	}
 
-	user, err := models.NewUserFromParams(&params)
+	userParams, err := models.NewUserFromParams(&params)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	userID, err := userStore.InsertUser(ctx, nil, user)
+	user, err := userStore.InsertUser(ctx, nil, userParams)
 	if err != nil {
 		log.Printf("insert failed: %v", err)
 		os.Exit(1)
 	}
 
-	account := models.Account{
+	accountParams := models.Account{
 		Name:     "Main",
 		Entity:   models.BANCOLOMBIA,
 		Currency: models.COP,
-		UserID:   userID,
+		UserID:   user.ID,
 	}
 
-	accountID, err := accountStore.InsertAccount(ctx, nil, &account)
+	account, err := accountStore.InsertAccount(ctx, nil, &accountParams)
 	if err != nil {
 		log.Printf("insert failed: %v", err)
 		os.Exit(1)
@@ -73,7 +73,7 @@ func seed() {
 			Value:       320000,
 			Date:        time.Now().Add(-7 * 24 * time.Hour),
 			Relevance:   models.Essential,
-			AccountID:   accountID,
+			AccountID:   account.ID,
 		},
 		{
 			Concept:     "Actividades",
@@ -81,7 +81,7 @@ func seed() {
 			Value:       20000,
 			Date:        time.Now().Add(-5 * 24 * time.Hour),
 			Relevance:   models.Optional,
-			AccountID:   accountID,
+			AccountID:   account.ID,
 		},
 		{
 			Concept:     "Ahorro",
@@ -89,7 +89,7 @@ func seed() {
 			Value:       100000,
 			Date:        time.Now().Add(-3 * 24 * time.Hour),
 			Relevance:   models.Important,
-			AccountID:   accountID,
+			AccountID:   account.ID,
 		},
 		{
 			Concept:     "Ropa",
@@ -97,7 +97,7 @@ func seed() {
 			Value:       5000,
 			Date:        time.Now().Add(-9 * 24 * time.Hour),
 			Relevance:   models.Optional,
-			AccountID:   accountID,
+			AccountID:   account.ID,
 		},
 	}
 
@@ -118,7 +118,7 @@ func seed() {
 			Type:         models.HIPOTECARIO,
 			Rate:         2.14,
 			Total:        80000000,
-			UserID:       userID,
+			UserID:       user.ID,
 			Installments: 12,
 		},
 		{
@@ -129,7 +129,7 @@ func seed() {
 			Type:         models.LIBRE,
 			Rate:         1.8,
 			Total:        10000000,
-			UserID:       userID,
+			UserID:       user.ID,
 			Installments: 24,
 		},
 	}
