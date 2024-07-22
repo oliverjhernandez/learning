@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -93,7 +93,7 @@ func AddTx(app *fiber.App, accID int) (*models.Transaction, error) {
 		AccountID:   accID,
 	}
 
-	newTxn, err := models.NewTransactionFromParams(params)
+	newTxn, err := models.NewTransactionFromParams(&params)
 	if err != nil {
 		return nil, err
 	}

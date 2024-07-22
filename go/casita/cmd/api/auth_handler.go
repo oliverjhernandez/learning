@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"

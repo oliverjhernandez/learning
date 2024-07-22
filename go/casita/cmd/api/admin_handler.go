@@ -1,7 +1,7 @@
 package api
 
 import (
-	"casita/internal/data"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"casita/internal/data"
+	"casita/internal/models"
 )
 
 type UserStore interface {

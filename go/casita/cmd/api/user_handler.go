@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -33,7 +33,7 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	// 	return ErrInvalidParams()
 	// }
 
-	txn, err := models.NewTransactionFromParams(params)
+	txn, err := models.NewTransactionFromParams(&params)
 	if err != nil {
 		badRequestError(c)
 		return err

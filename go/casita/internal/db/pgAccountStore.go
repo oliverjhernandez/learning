@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"casita/internal/data"
+	"casita/internal/models"
 )
 
 // TODO: Improve the errors passed to the layer above

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -66,7 +66,7 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	cred, err := models.NewCreditFromParams(params)
+	cred, err := models.NewCreditFromParams(&params)
 	if err != nil {
 		badRequestError(c)
 		return err

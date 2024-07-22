@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"casita/internal/data"
 	"casita/internal/db"
+	"casita/internal/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,7 +28,7 @@ func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	acc, err := models.NewAccountFromParams(params)
+	acc, err := models.NewAccountFromParams(&params)
 	if err != nil {
 		badRequestError(c)
 		return err
