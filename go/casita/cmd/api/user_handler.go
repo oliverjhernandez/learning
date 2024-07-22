@@ -22,7 +22,7 @@ func NewUserHandler(s *db.Store) *UserHandler {
 
 func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 	var params models.CreateUser
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}
@@ -97,7 +97,7 @@ func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}

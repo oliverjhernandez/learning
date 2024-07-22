@@ -23,7 +23,8 @@ func NewAccountHandler(s *db.Store) *AccountHandler {
 var params *models.CreateAccount
 
 func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) error {
-	if err := c.BodyParser(&params); err != nil {
+	var params models.CreateAccount
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}
@@ -98,7 +99,7 @@ func (ah *AccountHandler) HandlerUpdateAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}

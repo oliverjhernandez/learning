@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -9,7 +10,7 @@ import (
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	if apiError, ok := err.(*fiber.Error); ok {
-		NewApiError(c, fiber.StatusInternalServerError, apiError.Message)
+		NewApiError(c, apiError.Code, apiError.Message)
 		return apiError
 	}
 	NewApiError(c, fiber.StatusInternalServerError, err.Error())
@@ -19,74 +20,59 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	}
 }
 
-func NewApiError(c *fiber.Ctx, status int, error string) {
+func NewApiError(c *fiber.Ctx, status int, message interface{}) {
 	err := Envelope{
 		Status: strconv.Itoa(status),
-		Error:  error,
+		Error:  message,
 	}
 
 	c.Response().Header.Add("Content-Type", "application/json")
 	c.Status(status).JSON(err)
 }
 
-func internalServerError(c *fiber.Ctx) *fiber.Error {
+func internalServerError(c *fiber.Ctx) error {
 	message := "the server encountered a problem and could not process your request"
 	NewApiError(c, fiber.StatusInternalServerError, message)
-	return &fiber.Error{
-		Code:    fiber.StatusInternalServerError,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func notFoundError(c *fiber.Ctx) *fiber.Error {
+func notFoundError(c *fiber.Ctx) error {
 	message := "the resource you requested could not be found"
 	NewApiError(c, fiber.StatusNotFound, message)
-	return &fiber.Error{
-		Code:    fiber.StatusNotFound,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func methodNotAllowedError(c *fiber.Ctx) *fiber.Error {
+func methodNotAllowedError(c *fiber.Ctx) error {
 	message := fmt.Sprintf("the %s method is not supported for this resource", c.Method())
 	NewApiError(c, fiber.StatusMethodNotAllowed, message)
-	return &fiber.Error{
-		Code:    fiber.StatusMethodNotAllowed,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func badRequestError(c *fiber.Ctx) *fiber.Error {
+func badRequestError(c *fiber.Ctx) error {
 	message := "the server was unable to process the request"
 	NewApiError(c, fiber.StatusBadRequest, message)
-	return &fiber.Error{
-		Code:    fiber.StatusBadRequest,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func editConflictError(c *fiber.Ctx) *fiber.Error {
+func editConflictError(c *fiber.Ctx) error {
 	message := "unable to update the record due to an edit conflict, please try again"
 	NewApiError(c, fiber.StatusConflict, message)
-	return &fiber.Error{
-		Code:    fiber.StatusConflict,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func unauthorizedError(c *fiber.Ctx) *fiber.Error {
+func unauthorizedError(c *fiber.Ctx) error {
 	message := "unauthorized access"
 	NewApiError(c, fiber.StatusUnauthorized, message)
-	return &fiber.Error{
-		Code:    fiber.StatusUnauthorized,
-		Message: message,
-	}
+	return errors.New(message)
 }
 
-func invalidCredentials(c *fiber.Ctx) *fiber.Error {
+func invalidCredentials(c *fiber.Ctx) error {
 	message := "invalid credentials"
 	NewApiError(c, fiber.StatusUnauthorized, message)
-	return &fiber.Error{
-		Code: fiber.StatusUnauthorized,
-	}
+	return errors.New(message)
+}
+
+func failedValidationResponse(c *fiber.Ctx, message map[string]string) {
+	NewApiError(c, fiber.StatusUnprocessableEntity, errors)
+	return errors.New(message)
 }

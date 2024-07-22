@@ -40,7 +40,7 @@ type genericResponse struct {
 
 func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	var params AuthParams
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		invalidCredentials(c)
 		return err
 	}

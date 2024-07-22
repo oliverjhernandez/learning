@@ -22,7 +22,7 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 
 func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 	var params models.CreateTransaction
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}
@@ -101,7 +101,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}

@@ -60,8 +60,8 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 }
 
 func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
-	var params *models.CreateCredit
-	if err := c.BodyParser(&params); err != nil {
+	var params models.CreateCredit
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}
@@ -97,7 +97,7 @@ func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := c.BodyParser(&params); err != nil {
+	if err := readJSON(c, &params); err != nil {
 		badRequestError(c)
 		return err
 	}
