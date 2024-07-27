@@ -55,7 +55,7 @@ func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", users, "")
+	err = writeJSON(c, http.StatusOK, "got you", users, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -78,7 +78,7 @@ func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", user, "")
+	err = writeJSON(c, http.StatusOK, "got you", user, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -108,7 +108,7 @@ func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, "")
+	err = writeJSON(c, http.StatusOK, "resource updated successfully", userResp, "")
 	if err != nil {
 		internalServerError(c)
 		return err
