@@ -72,7 +72,8 @@ func invalidCredentials(c *fiber.Ctx) error {
 	return errors.New(message)
 }
 
-func failedValidationResponse(c *fiber.Ctx, message map[string]string) {
-	NewApiError(c, fiber.StatusUnprocessableEntity, errors)
-	return errors.New(message)
+func failedValidationResponse(c *fiber.Ctx, message map[string]string) error {
+	explanation := "validation failed"
+	NewApiError(c, fiber.StatusUnprocessableEntity, message)
+	return errors.New(explanation)
 }
