@@ -6,6 +6,7 @@ import (
 
 	"casita/internal/db"
 	"casita/internal/models"
+	"casita/internal/validator"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,17 +28,18 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	// TODO: There should be some validation of the data coming in
-	//
-	// if err := params.Validate(); err != nil {
-	// 	return ErrInvalidParams()
-	// }
-
 	txn, err := models.NewTransactionFromParams(&params)
 	if err != nil {
 		badRequestError(c)
 		return err
 	}
+
+	v := validator.New()
+	if models.ValidateTransaction(v, txn); !v.Valid() {
+		err := failedValidationResponse(c, v.Errors)
+		return err
+	}
+
 	tran, err := th.Store.InsertTransaction(c.Context(), nil, txn)
 	if err != nil {
 		internalServerError(c)
