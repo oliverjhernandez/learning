@@ -36,7 +36,7 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 
 	query := `
             INSERT INTO credits
-                (closing_date, due_date, identifier, entity, type, rate, total, user_id, installments, created_at, updated_at)
+                (closing_day, due_day, identifier, entity, type, rate, total, user_id, installments, created_at, updated_at)
             VALUES
                 ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id
@@ -45,8 +45,8 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 	var err error
 	if tx != nil {
 		err = tx.QueryRowContext(ctx, query,
-			credit.ClosingDate,
-			credit.DueDate,
+			credit.ClosingDay,
+			credit.DueDay,
 			credit.Identifier,
 			credit.Entity,
 			credit.Type,
@@ -59,8 +59,8 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 		).Scan(&newID)
 	} else {
 		err = s.client.QueryRowContext(ctx, query,
-			credit.ClosingDate,
-			credit.DueDate,
+			credit.ClosingDay,
+			credit.DueDay,
 			credit.Identifier,
 			credit.Entity,
 			credit.Type,
@@ -92,7 +92,7 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 
 	query := `
             SELECT 
-              id, closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at
+              id, closing_day, due_day, identifier, entity, type, rate, total, installments, created_at, updated_at
             FROM credits
             WHERE id=$1
     `
@@ -101,8 +101,8 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 	if tx != nil {
 		err = tx.QueryRowContext(ctx, query, id).Scan(
 			&credit.ID,
-			&credit.ClosingDate,
-			&credit.DueDate,
+			&credit.ClosingDay,
+			&credit.DueDay,
 			&credit.Identifier,
 			&credit.Entity,
 			&credit.Type,
@@ -115,8 +115,8 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 	} else {
 		err = s.client.QueryRowContext(ctx, query, id).Scan(
 			&credit.ID,
-			&credit.ClosingDate,
-			&credit.DueDate,
+			&credit.ClosingDay,
+			&credit.DueDay,
 			&credit.Identifier,
 			&credit.Entity,
 			&credit.Type,
@@ -142,7 +142,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*model
 
 	query := `
             SELECT 
-              id, closing_date, due_date, identifier, entity, type, rate, total, installments, created_at, updated_at
+              id, closing_day, due_day, identifier, entity, type, rate, total, installments, created_at, updated_at
             from credits`
 
 	var rows *sql.Rows
@@ -161,8 +161,8 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*model
 		var credit models.Credit
 		err := rows.Scan(
 			&credit.ID,
-			&credit.ClosingDate,
-			&credit.DueDate,
+			&credit.ClosingDay,
+			&credit.DueDay,
 			&credit.Identifier,
 			&credit.Entity,
 			&credit.Type,
@@ -193,14 +193,14 @@ func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, pa
 	args := []interface{}{}
 	argID := 1
 
-	if !params.ClosingDate.IsZero() {
-		setClauses = append(setClauses, fmt.Sprintf("closing_date = $%d", argID))
-		args = append(args, params.ClosingDate)
+	if params.ClosingDay != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("closing_day = $%d", argID))
+		args = append(args, params.ClosingDay)
 		argID++
 	}
-	if !params.DueDate.IsZero() {
-		setClauses = append(setClauses, fmt.Sprintf("due_date = $%d", argID))
-		args = append(args, params.DueDate)
+	if params.DueDay != 0 {
+		setClauses = append(setClauses, fmt.Sprintf("due_day = $%d", argID))
+		args = append(args, params.DueDay)
 		argID++
 	}
 	if params.Identifier != "" {
