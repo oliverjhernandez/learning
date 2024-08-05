@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"casita/internal/validator"
+)
 
 type Relevance int
 
@@ -68,4 +72,27 @@ func NewTransactionFromParams(p *CreateTransaction) (*Transaction, error) {
 		Relevance:   p.Relevance,
 		AccountID:   p.AccountID,
 	}, nil
+}
+
+func ValidateTransaction(v *validator.Validator, t *Transaction) {
+	// Date
+	v.Check(t.Date.Before(time.Now()), "date", "transaction date must not be in the future")
+
+	// Concept
+	v.Check(t.Concept != "", "concept", "must be provided")
+	v.Check(len(t.Concept) >= 5, "concept", "must be at least 5 bytes long")
+
+	// Description
+	v.Check(t.Description != "", "description", "must be provided")
+	v.Check(len(t.Description) >= 5, "description", "must be at least 5 bytes long")
+
+	// Relevance
+	v.Check(t.Relevance != 0, "entity", "must be provided")
+	v.Check(t.Relevance > 0, "entity", "must be greater than zero")
+
+	// AccountID
+	v.Check(t.AccountID != 0, "account_id", "must be provided")
+
+	// Value
+	v.Check(t.Value >= 0, "value", "must be provided")
 }
