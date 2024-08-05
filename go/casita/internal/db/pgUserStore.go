@@ -230,7 +230,7 @@ func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params
 		args = append(args, params.Email)
 		argID++
 	}
-	if params.IsAdmin {
+	if *params.IsAdmin {
 		setClauses = append(setClauses, fmt.Sprintf("is_admin = $%d", argID))
 		args = append(args, params.IsAdmin)
 		argID++
