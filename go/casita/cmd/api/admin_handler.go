@@ -12,7 +12,7 @@ func AdminAuth(c *fiber.Ctx) {
 		unauthorizedError(c)
 	}
 
-	if !user.IsAdmin {
+	if !*user.IsAdmin {
 		unauthorizedError(c)
 	}
 
