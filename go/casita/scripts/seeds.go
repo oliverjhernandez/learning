@@ -34,11 +34,12 @@ func tearDown(db *sql.DB) error {
 }
 
 func seed() {
+	newUserIsAdmin := true
 	params := models.CreateUser{
 		FirstName: "Corina",
 		LastName:  "Pulido",
 		Email:     "corina@gmail.com",
-		IsAdmin:   true,
+		IsAdmin:   &newUserIsAdmin,
 		Passwd:    "test123",
 	}
 
@@ -111,8 +112,8 @@ func seed() {
 
 	credits := []*models.Credit{
 		{
-			ClosingDate:  time.Now(),
-			DueDate:      time.Now().Add(time.Hour * 24 * 365),
+			ClosingDay:   19,
+			DueDay:       27,
 			Identifier:   "q3hf489657439-42f89h5",
 			Entity:       models.BANCOLOMBIA,
 			Type:         models.HIPOTECARIO,
@@ -122,8 +123,8 @@ func seed() {
 			Installments: 12,
 		},
 		{
-			ClosingDate:  time.Now().Add(time.Hour),
-			DueDate:      time.Now().Add(time.Hour * 24 * 365 * 4),
+			ClosingDay:   16,
+			DueDay:       25,
 			Identifier:   "uofhehuiwrhurwfghvrw-34678",
 			Entity:       models.AV_VILLAS,
 			Type:         models.LIBRE,
