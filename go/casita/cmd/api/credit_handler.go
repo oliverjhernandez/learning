@@ -6,6 +6,7 @@ import (
 
 	"casita/internal/db"
 	"casita/internal/models"
+	"casita/internal/validator"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -69,6 +70,12 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 	cred, err := models.NewCreditFromParams(&params)
 	if err != nil {
 		badRequestError(c)
+		return err
+	}
+
+	v := validator.New()
+	if models.ValidateCredit(v, cred); !v.Valid() {
+		err := failedValidationResponse(c, v.Errors)
 		return err
 	}
 
