@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"casita/internal/validator"
+)
 
 type Currency int
 
@@ -55,4 +59,19 @@ func NewAccountFromParams(a *CreateAccount) (*Account, error) {
 		Entity:    a.Entity,
 		Currency:  a.Currency,
 	}, nil
+}
+
+func ValidateAccount(v *validator.Validator, a *Account) {
+	// Name
+	v.Check(a.Name != "", "name", "must be provided")
+	v.Check(len(a.Name) >= 2, "name", "must be at least 2 bytes long")
+
+	// UserID
+	v.Check(a.UserID != 0, "user_id", "must be provided")
+
+	// Entity
+	v.Check(a.Entity != 0, "entity", "must be provided")
+
+	// Currency
+	v.Check(a.Currency != 0, "entity", "must be provided")
 }
