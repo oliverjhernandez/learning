@@ -6,6 +6,7 @@ import (
 
 	"casita/internal/db"
 	"casita/internal/models"
+	"casita/internal/validator"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,6 +31,12 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 	user, err := models.NewUserFromParams(&params)
 	if err != nil {
 		badRequestError(c)
+		return err
+	}
+
+	v := validator.New()
+	if models.ValidateUser(v, user); !v.Valid() {
+		err := failedValidationResponse(c, v.Errors)
 		return err
 	}
 
