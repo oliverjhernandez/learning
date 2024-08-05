@@ -30,9 +30,9 @@ func main() {
 		accountHandler = api.NewAccountHandler(stores)
 		authHandler    = api.NewAuthHandler(stores)
 
-		// appv1 := app.Group("/v1")
-		appv1 = fiberApp.Group("/v1", api.JWTAuthentication(stores.UserStore))
-		api   = fiberApp.Group("/api")
+		appv1 = fiberApp.Group("/v1")
+		// appv1 = fiberApp.Group("/v1", api.JWTAuthentication(stores.UserStore))
+		api = fiberApp.Group("/api")
 		// admin = appv1.Group("/admin", api.AdminAuth)
 	)
 
