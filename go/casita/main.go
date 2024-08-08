@@ -22,8 +22,6 @@ func main() {
 		fiberApp     = fiber.New(fiberCconfig)
 		listenAddr   = flag.String("listenAddr", ":4000", "The listen address of the API server")
 
-		// Handlers
-		// TODO: restrict each handler ot its specific store
 		txHandler      = api.NewTransactionHandler(stores)
 		userHandler    = api.NewUserHandler(stores)
 		creditHandler  = api.NewCreditHandler(stores)
