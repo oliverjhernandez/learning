@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -73,8 +72,9 @@ func readJSON(c *fiber.Ctx, dst interface{}) error {
 	return nil
 }
 
-func readString(qs url.Values, key string, defaultValue string) string {
-	s := qs.Get(key)
+// Not necessary when using Fiber
+func readString(c *fiber.Ctx, key string, defaultValue string) string {
+	s := c.Query(key, defaultValue)
 
 	if s == "" {
 		return defaultValue
@@ -83,8 +83,9 @@ func readString(qs url.Values, key string, defaultValue string) string {
 	return s
 }
 
-func readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
-	s := qs.Get(key)
+// Not necessary when using Fiber
+func readInt(c *fiber.Ctx, key string, defaultValue int, v *validator.Validator) int {
+	s := c.Query(key, "")
 	if s == "" {
 		return defaultValue
 	}
