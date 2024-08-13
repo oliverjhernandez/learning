@@ -59,6 +59,16 @@ type UpdateTransaction struct {
 	Value       int32     `json:"value"`
 }
 
+type ListTransactions struct {
+	Concept     string    `json:"concept"`
+	Description string    `json:"description"`
+	Relevance   Relevance `json:"relevance"`
+	Value       int32     `json:"value"`
+	Page        int
+	PageSize    int
+	Sort        string
+}
+
 func NewTransactionFromParams(p *CreateTransaction) (*Transaction, error) {
 	now := time.Now()
 
