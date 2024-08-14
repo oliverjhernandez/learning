@@ -1,0 +1,28 @@
+
+###
+
+GET http://localhost:4000/v1/transactions
+
+###
+
+GET http://localhost:4000/v1/transactions?page=0&page_size=0&sort=hello
+
+###
+
+GET http://localhost:4000/v1/transactions?concept=supermercado
+
+###
+
+GET http://localhost:4000/v1/transactions?value=5000
+
+###
+
+GET http://localhost:4000/v1/transactions?description=natación
+
+###
+
+GET http://localhost:4000/v1/transactions?concept=supermercado&value=320000
+
+###
+
+GET http://localhost:4000/v1/users
