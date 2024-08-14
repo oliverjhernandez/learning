@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -56,7 +57,33 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 }
 
 func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
-	txns, err := th.Store.GetAllTransactions(c.Context(), nil)
+	input := models.ListTransactions{}
+	v := validator.New()
+
+	input.Concept = readString(c, "concept", "")
+	input.Description = readString(c, "description", "")
+	input.Relevance = models.Relevance(readInt(c, "relevance", 0, v))
+	input.Value = int32(readInt(c, "value", -1, v))
+
+	input.Page = readInt(c, "page", 1, v)
+	input.PageSize = readInt(c, "page_size", 10, v)
+	input.Sort = readString(c, "sort", "value")
+	input.SortSafeList = []string{"value", "-value", "relevance", "-relevance", "day", "-day", "month", "-month"}
+
+	if models.ValidateFilters(v, input.Filters); !v.Valid() {
+		err := failedValidationResponse(c, v.Errors)
+		return err
+	}
+
+	fmt.Printf("Input: %+v\n", input)
+
+	if !v.Valid() {
+		failedValidationResponse(c, v.Errors)
+		err := failedValidationResponse(c, v.Errors)
+		return err
+	}
+
+	txns, err := th.Store.GetAllTransactions(c.Context(), nil, input.Concept, input.Value, input.Description, input.Filters)
 	if err != nil {
 		notFoundError(c)
 		return err
