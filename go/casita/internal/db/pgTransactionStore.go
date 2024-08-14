@@ -13,7 +13,7 @@ import (
 type TransactionStore interface {
 	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error)
 	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
-	GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error)
+	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error)
 	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error)
 	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error
 }
@@ -122,24 +122,27 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 	return &txn, nil
 }
 
-func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx) ([]*models.Transaction, error) {
+func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	var txns []*models.Transaction
 
 	query := `
-            SELECT 
-                id, concept, description, value, date, relevance, account_id, created_at, updated_at
-            from transactions
-    `
+            SELECT id, concept, description, value, date, relevance, account_id, created_at, updated_at
+            FROM transactions
+            WHERE 
+              ($1 = '' OR LOWER(concept) = LOWER($1)) AND
+              ($2 = -1 OR value = $2) AND
+              ($3 = '' OR LOWER(description) = LOWER($3))
+            ORDER BY id`
 
 	var err error
 	var rows *sql.Rows
 	if tx != nil {
-		rows, err = tx.QueryContext(ctx, query)
+		rows, err = tx.QueryContext(ctx, query, concept, value, description)
 	} else {
-		rows, err = s.client.QueryContext(ctx, query)
+		rows, err = s.client.QueryContext(ctx, query, concept, value, description)
 	}
 	if err != nil {
 		return txns, err
