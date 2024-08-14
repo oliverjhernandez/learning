@@ -85,7 +85,7 @@ func readString(c *fiber.Ctx, key string, defaultValue string) string {
 
 // Not necessary when using Fiber
 func readInt(c *fiber.Ctx, key string, defaultValue int, v *validator.Validator) int {
-	s := c.Query(key, "")
+	s := c.Query(key)
 	if s == "" {
 		return defaultValue
 	}
