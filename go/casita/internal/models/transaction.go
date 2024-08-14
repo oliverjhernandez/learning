@@ -64,9 +64,7 @@ type ListTransactions struct {
 	Description string    `json:"description"`
 	Relevance   Relevance `json:"relevance"`
 	Value       int32     `json:"value"`
-	Page        int
-	PageSize    int
-	Sort        string
+	Filters
 }
 
 func NewTransactionFromParams(p *CreateTransaction) (*Transaction, error) {
