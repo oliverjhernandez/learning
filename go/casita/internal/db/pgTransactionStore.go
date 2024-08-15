@@ -134,7 +134,7 @@ func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx,
             WHERE 
               ($1 = '' OR LOWER(concept) = LOWER($1)) AND
               ($2 = -1 OR value = $2) AND
-              ($3 = '' OR LOWER(description) = LOWER($3))
+              ($3 = '' OR to_tsvector('simple', description) @@ plainto_tsquery('simple', $3))
             ORDER BY id`
 
 	var err error
