@@ -67,7 +67,7 @@ func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 	input.Page = readInt(c, "page", 1, v)
 	input.PageSize = readInt(c, "page_size", 10, v)
 	input.Sort = readString(c, "sort", "value")
-	input.SortSafeList = []string{"value", "-value", "relevance", "-relevance", "day", "-day", "month", "-month"}
+	input.SortSafeList = []string{"value", "-value", "concept", "-concept", "relevance", "-relevance", "day", "-day", "month", "-month"}
 
 	if models.ValidateFilters(v, input.Filters); !v.Valid() {
 		err := failedValidationResponse(c, v.Errors)
