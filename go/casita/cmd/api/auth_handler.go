@@ -64,7 +64,7 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 
 	fmt.Println("Authenticated -> ", user.FirstName)
 
-	err = writeJSON(c, http.StatusOK, "authenticated", resp, "")
+	err = writeJSON(c, http.StatusOK, "authenticated", resp, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err

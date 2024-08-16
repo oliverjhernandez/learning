@@ -48,7 +48,7 @@ func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", acc, "")
+	err = writeJSON(c, http.StatusOK, "resource created successfully", acc, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -64,7 +64,7 @@ func (ah *AccountHandler) HandlerGetAccounts(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", accs, "")
+	err = writeJSON(c, http.StatusOK, "got you", accs, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -87,7 +87,7 @@ func (ah *AccountHandler) HandlerGetAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", acc, "")
+	err = writeJSON(c, http.StatusOK, "got you", acc, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -117,7 +117,7 @@ func (ah *AccountHandler) HandlerUpdateAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "updated successfully", acc, "")
+	err = writeJSON(c, http.StatusOK, "updated successfully", acc, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -139,7 +139,7 @@ func (ah *AccountHandler) HandlerDeleteAccount(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted", nil, "")
+	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err

@@ -8,24 +8,27 @@ import (
 	"strconv"
 	"strings"
 
+	"casita/internal/models"
 	"casita/internal/validator"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type Envelope struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
+	Metadata *models.Metadata `json:"metadata,omitempty"`
+	Status   string           `json:"status"`
+	Message  string           `json:"message"`
+	Data     interface{}      `json:"data,omitempty"`
+	Error    interface{}      `json:"error,omitempty"`
 }
 
-func writeJSON(c *fiber.Ctx, status int, message string, data interface{}, error string) error {
+func writeJSON(c *fiber.Ctx, status int, message string, data interface{}, metadata *models.Metadata, error string) error {
 	response := Envelope{
-		Status:  strconv.Itoa(status),
-		Message: message,
-		Data:    data,
-		Error:   error,
+		Metadata: metadata,
+		Status:   strconv.Itoa(status),
+		Message:  message,
+		Data:     data,
+		Error:    error,
 	}
 
 	c.Response().Header.Add("Content-Type", "application/json")
@@ -72,7 +75,7 @@ func readJSON(c *fiber.Ctx, dst interface{}) error {
 	return nil
 }
 
-// Not necessary when using Fiber
+// NOTE: Not necessary when using Fiber
 func readString(c *fiber.Ctx, key string, defaultValue string) string {
 	s := c.Query(key, defaultValue)
 
@@ -83,7 +86,7 @@ func readString(c *fiber.Ctx, key string, defaultValue string) string {
 	return s
 }
 
-// Not necessary when using Fiber
+// NOTE: Not necessary when using Fiber
 func readInt(c *fiber.Ctx, key string, defaultValue int, v *validator.Validator) int {
 	s := c.Query(key)
 	if s == "" {

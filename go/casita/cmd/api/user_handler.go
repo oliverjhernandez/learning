@@ -46,7 +46,7 @@ func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, "")
+	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -62,7 +62,7 @@ func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", users, "")
+	err = writeJSON(c, http.StatusOK, "got you", users, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -85,7 +85,7 @@ func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", user, "")
+	err = writeJSON(c, http.StatusOK, "got you", user, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -115,7 +115,7 @@ func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource updated successfully", userResp, "")
+	err = writeJSON(c, http.StatusOK, "resource updated successfully", userResp, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -137,7 +137,7 @@ func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted successfully", nil, "")
+	err = writeJSON(c, http.StatusOK, "resource deleted successfully", nil, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err

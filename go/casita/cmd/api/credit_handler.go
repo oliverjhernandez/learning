@@ -28,7 +28,7 @@ func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credits, "")
+	err = writeJSON(c, http.StatusOK, "got you", credits, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -51,7 +51,7 @@ func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credit, "")
+	err = writeJSON(c, http.StatusOK, "got you", credit, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -85,7 +85,7 @@ func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credResp, "")
+	err = writeJSON(c, http.StatusOK, "got you", credResp, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -116,7 +116,7 @@ func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
 	}
 
 	// TODO: Standardize messages
-	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, "")
+	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -138,7 +138,7 @@ func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted", nil, "")
+	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err

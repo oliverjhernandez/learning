@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -47,7 +46,7 @@ func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", tran, "")
+	err = writeJSON(c, http.StatusOK, "resource created successfully", tran, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -75,21 +74,19 @@ func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 		return err
 	}
 
-	fmt.Printf("Input: %+v\n", input)
-
 	if !v.Valid() {
 		failedValidationResponse(c, v.Errors)
 		err := failedValidationResponse(c, v.Errors)
 		return err
 	}
 
-	txns, err := th.Store.GetAllTransactions(c.Context(), nil, input.Concept, input.Value, input.Description, input.Filters)
+	txns, metadata, err := th.Store.GetAllTransactions(c.Context(), nil, input.Concept, input.Value, input.Description, input.Filters)
 	if err != nil {
 		notFoundError(c)
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", &txns, "")
+	err = writeJSON(c, http.StatusOK, "got you", &txns, &metadata, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -112,7 +109,7 @@ func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", &txn, "")
+	err = writeJSON(c, http.StatusOK, "got you", &txn, nil, "")
 	if err != nil {
 		internalServerError(c)
 	}
@@ -141,7 +138,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource updated successfully", &tran, "")
+	err = writeJSON(c, http.StatusOK, "resource updated successfully", &tran, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
@@ -163,7 +160,7 @@ func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = writeJSON(c, http.StatusOK, "resorce deleted successfully", nil, "")
+	err = writeJSON(c, http.StatusOK, "resorce deleted successfully", nil, nil, "")
 	if err != nil {
 		internalServerError(c)
 		return err
