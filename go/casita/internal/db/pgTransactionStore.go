@@ -13,7 +13,8 @@ import (
 type TransactionStore interface {
 	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error)
 	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
-	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error)
+	// GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error)
+	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, models.Metadata, error)
 	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error)
 	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error
 }
@@ -122,36 +123,41 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 	return &txn, nil
 }
 
-func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error) {
+func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, models.Metadata, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
+	totalRecords := 0
 	var txns []*models.Transaction
 
-	query := `
-            SELECT id, concept, description, value, date, relevance, account_id, created_at, updated_at
-            FROM transactions
-            WHERE 
-              ($1 = '' OR LOWER(concept) = LOWER($1)) AND
-              ($2 = -1 OR value = $2) AND
-              ($3 = '' OR to_tsvector('simple', description) @@ plainto_tsquery('simple', $3))
-            ORDER BY id`
+	query := fmt.Sprintf(`
+    SELECT count(*) OVER(), id, concept, description, value, date, relevance, account_id, created_at, updated_at
+    FROM transactions
+    WHERE 
+      ($1 = '' OR LOWER(concept) = LOWER($1)) AND
+      ($2 = -1 OR value = $2) AND
+      ($3 = '' OR to_tsvector('simple', description) @@ plainto_tsquery('simple', $3))
+    ORDER BY %s %s, id ASC
+    LIMIT $4 OFFSET $5`, f.SortColumn(), f.SortDirection())
 
 	var err error
 	var rows *sql.Rows
+	args := []interface{}{concept, value, description, f.Limit(), f.Offset()}
+
 	if tx != nil {
-		rows, err = tx.QueryContext(ctx, query, concept, value, description)
+		rows, err = tx.QueryContext(ctx, query, args...)
 	} else {
-		rows, err = s.client.QueryContext(ctx, query, concept, value, description)
+		rows, err = s.client.QueryContext(ctx, query, args...)
 	}
 	if err != nil {
-		return txns, err
+		return txns, models.Metadata{}, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var txn models.Transaction
 		err = rows.Scan(
+			&totalRecords,
 			&txn.ID,
 			&txn.Concept,
 			&txn.Description,
@@ -163,13 +169,15 @@ func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx,
 			&txn.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, models.Metadata{}, err
 		}
 
 		txns = append(txns, &txn)
 	}
 
-	return txns, nil
+	metadata := models.CalculateMetadata(totalRecords, f.Page, f.PageSize)
+
+	return txns, metadata, nil
 }
 
 func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error) {
