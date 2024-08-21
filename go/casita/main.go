@@ -8,6 +8,7 @@ import (
 
 	"casita/cmd/api"
 	"casita/internal/db"
+	"casita/internal/jsonlog"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -42,7 +43,7 @@ type app struct {
 }
 
 func main() {
-	stores, client, err := db.NewStore()
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 	cfg := config{
 		env:  "dev",
 		port: 4000,
@@ -63,8 +64,10 @@ func main() {
 
 	client, err := connectSQL(app.config.db)
 	if err != nil {
-		fmt.Printf("error loading db store")
+		app.logger.PrintFatal(err, nil)
 	}
+
+	app.logger.PrintInfo("database connection pool stablished", nil)
 	defer client.Close()
 
 	stores := &db.Store{
@@ -77,11 +80,19 @@ func main() {
 
 	fiberConfig := fiber.Config{ErrorHandler: api.ErrorHandler}
 	fiberApp := fiber.New(fiberConfig)
+	app.logger.PrintInfo("starting server", map[string]string{
+		"address": app.config.db.host,
+		"env":     app.config.env,
+	})
+
 	listenAddr := flag.String("listenAddr", ":4000", "The listen address of the API server")
 
 	api.InitializeRoutes(stores, fiberApp)
 
-	fiberApp.Listen(*listenAddr)
+	err = fiberApp.Listen(*listenAddr)
+	if err != nil {
+		app.logger.PrintFatal(err, nil)
+	}
 }
 
 func connectSQL(dbParams dbParams) (*sql.DB, error) {
