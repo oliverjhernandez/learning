@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Routes(stores *db.Store, app *fiber.App) {
+func InitializeRoutes(stores *db.Store, app *fiber.App) {
 	var (
 		txHandler      = NewTransactionHandler(stores)
 		userHandler    = NewUserHandler(stores)

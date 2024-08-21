@@ -14,8 +14,15 @@ type ApiError struct {
 }
 
 func (e ApiError) Error() string {
-	return "heelllloooo"
+	return "helloooooo"
 }
+
+// func (e ApiError) log(r *http.Request, err error, logger jsonlog.Logger) {
+// 	logger.PrintError(e, map[string]string{
+// 		"request_method": r.Method,
+// 		"request_url":    r.URL.String(),
+// 	})
+// }
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	if apiError, ok := err.(*fiber.Error); ok {
