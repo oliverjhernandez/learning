@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -8,7 +9,7 @@ import (
 	"casita/internal/models"
 	"casita/internal/validator"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
 type TransactionHandler struct {
@@ -21,41 +22,43 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 	}
 }
 
-func (th *TransactionHandler) HandlerPostTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.CreateTransaction
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	txn, err := models.NewTransactionFromParams(&params)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	v := validator.New()
 	if models.ValidateTransaction(v, txn); !v.Valid() {
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
-	tran, err := th.Store.InsertTransaction(c.Context(), nil, txn)
+	tran, err := th.Store.InsertTransaction(c, nil, txn)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource created successfully", tran, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	input := models.ListTransactions{}
 	v := validator.New()
 
@@ -70,101 +73,105 @@ func (th *TransactionHandler) HandlerGetTransactions(c *fiber.Ctx) error {
 	input.SortSafeList = []string{"value", "-value", "concept", "-concept", "relevance", "-relevance", "day", "-day", "month", "-month"}
 
 	if models.ValidateFilters(v, input.Filters); !v.Valid() {
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
 	if !v.Valid() {
-		failedValidationResponse(c, v.Errors)
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
-	txns, metadata, err := th.Store.GetAllTransactions(c.Context(), nil, input.Concept, input.Value, input.Description, input.Filters)
+	txns, metadata, err := th.Store.GetAllTransactions(c, nil, input.Concept, input.Value, input.Description, input.Filters)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", &txns, &metadata, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (th *TransactionHandler) HandlerGetTransaction(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (th *TransactionHandler) HandlerGetTransaction(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	txn, err := th.Store.GetTransactionByID(c.Context(), nil, id)
+	txn, err := th.Store.GetTransactionByID(c, nil, id)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", &txn, nil, "")
 	if err != nil {
-		internalServerError(c)
+		internalServerError(err)
 	}
 
-	return nil
+	return
 }
 
-func (th *TransactionHandler) HandlerUpdateTransaction(c *fiber.Ctx) error {
+func (th *TransactionHandler) HandlerUpdateTransaction(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
 	var params models.UpdateTransaction
 
-	strID := c.Params("id")
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	tran, err := th.Store.UpdateTransaction(c.Context(), nil, id, &params)
+	tran, err := th.Store.UpdateTransaction(c, nil, id, &params)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource updated successfully", &tran, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (th *TransactionHandler) HandlerDeleteTransaction(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (th *TransactionHandler) HandlerDeleteTransaction(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	if err := th.Store.DeleteTransactionByID(c.Context(), nil, id); err != nil {
-		internalServerError(c)
-		return err
+	if err := th.Store.DeleteTransactionByID(c, nil, id); err != nil {
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resorce deleted successfully", nil, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }

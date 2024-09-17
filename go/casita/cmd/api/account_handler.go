@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -8,7 +9,7 @@ import (
 	"casita/internal/models"
 	"casita/internal/validator"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
 type AccountHandler struct {
@@ -23,127 +24,132 @@ func NewAccountHandler(s *db.Store) *AccountHandler {
 
 var params *models.CreateAccount
 
-func (ah *AccountHandler) HandlerPostAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerPostAccount(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.CreateAccount
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	acc, err := models.NewAccountFromParams(&params)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	v := validator.New()
 	if models.ValidateAccount(v, acc); !v.Valid() {
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
-	acc, err = ah.Store.InsertAccount(c.Context(), nil, acc)
+	acc, err = ah.Store.InsertAccount(c, nil, acc)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource created successfully", acc, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ah *AccountHandler) HandlerGetAccounts(c *fiber.Ctx) error {
-	accs, err := ah.Store.GetAllAccounts(c.Context(), nil)
+func (ah *AccountHandler) HandlerGetAccounts(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	accs, err := ah.Store.GetAllAccounts(c, nil)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", accs, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ah *AccountHandler) HandlerGetAccount(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (ah *AccountHandler) HandlerGetAccount(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	acc, err := ah.Store.GetAccountByID(c.Context(), nil, id)
+	acc, err := ah.Store.GetAccountByID(c, nil, id)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", acc, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ah *AccountHandler) HandlerUpdateAccount(c *fiber.Ctx) error {
+func (ah *AccountHandler) HandlerUpdateAccount(w http.ResponseWriter, r *http.Request) {
 	var params models.UpdateAccount
 
-	strID := c.Params("id")
+	c := r.Context()
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	acc, err := ah.Store.UpdateAccount(c.Context(), nil, id, &params)
+	acc, err := ah.Store.UpdateAccount(c, nil, id, &params)
 	if err != nil {
-		editConflictError(c)
-		return err
+		editConflictError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "updated successfully", acc, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ah *AccountHandler) HandlerDeleteAccount(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (ah *AccountHandler) HandlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	if err := ah.Store.DeleteAccountByID(c.Context(), nil, id); err != nil {
-		internalServerError(c)
-		return err
+	if err := ah.Store.DeleteAccountByID(c, nil, id); err != nil {
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }

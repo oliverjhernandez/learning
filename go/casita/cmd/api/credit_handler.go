@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -8,7 +9,7 @@ import (
 	"casita/internal/models"
 	"casita/internal/validator"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
 type CreditHandler struct {
@@ -21,128 +22,135 @@ func NewCreditHandler(s *db.Store) *CreditHandler {
 	}
 }
 
-func (ch *CreditHandler) HandlerGetCredits(c *fiber.Ctx) error {
-	credits, err := ch.Store.GetAllCredits(c.Context(), nil)
+func (ch *CreditHandler) HandlerGetCredits(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	credits, err := ch.Store.GetAllCredits(c, nil)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credits, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ch *CreditHandler) HandlerGetCredit(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (ch *CreditHandler) HandlerGetCredit(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	credit, err := ch.Store.GetCreditByID(c.Context(), nil, id)
+	credit, err := ch.Store.GetCreditByID(c, nil, id)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credit, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ch *CreditHandler) HandlerPostCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerPostCredit(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.CreateCredit
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	cred, err := models.NewCreditFromParams(&params)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError((err))
+		return
 	}
 
 	v := validator.New()
 	if models.ValidateCredit(v, cred); !v.Valid() {
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
-	credResp, err := ch.Store.InsertCredit(c.Context(), nil, cred)
+	credResp, err := ch.Store.InsertCredit(c, nil, cred)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", credResp, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ch *CreditHandler) HandlerUpdateCredit(c *fiber.Ctx) error {
+func (ch *CreditHandler) HandlerUpdateCredit(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.UpdateCredit
 
-	strID := c.Params("id")
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	credResp, err := ch.Store.UpdateCredit(c.Context(), nil, id, &params)
+	credResp, err := ch.Store.UpdateCredit(c, nil, id, &params)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	// TODO: Standardize messages
 	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (ch *CreditHandler) HandlerDeleteCredit(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (ch *CreditHandler) HandlerDeleteCredit(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	if err := ch.Store.DeleteCreditByID(c.Context(), nil, id); err != nil {
-		internalServerError(c)
-		return err
+	if err := ch.Store.DeleteCreditByID(c, nil, id); err != nil {
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }

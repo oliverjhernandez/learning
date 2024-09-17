@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -8,7 +9,7 @@ import (
 	"casita/internal/models"
 	"casita/internal/validator"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
 type UserHandler struct {
@@ -21,127 +22,134 @@ func NewUserHandler(s *db.Store) *UserHandler {
 	}
 }
 
-func (uh *UserHandler) HandlerPostUser(c *fiber.Ctx) error {
+func (uh *UserHandler) HandlerPostUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.CreateUser
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	user, err := models.NewUserFromParams(&params)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	v := validator.New()
 	if models.ValidateUser(v, user); !v.Valid() {
-		err := failedValidationResponse(c, v.Errors)
-		return err
+		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		return
 	}
 
-	userResp, err := uh.Store.InsertUser(c.Context(), nil, user)
+	userResp, err := uh.Store.InsertUser(c, nil, user)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (uh *UserHandler) HandlerGetUsers(c *fiber.Ctx) error {
-	users, err := uh.Store.GetAllUsers(c.Context(), nil)
+func (uh *UserHandler) HandlerGetUsers(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	users, err := uh.Store.GetAllUsers(c, nil)
 	if err != nil {
-		notFoundError(c)
-		return err
+		notFoundError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", users, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (uh *UserHandler) HandlerGetUser(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (uh *UserHandler) HandlerGetUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	user, err := uh.Store.GetUserByID(c.Context(), nil, id)
+	user, err := uh.Store.GetUserByID(c, nil, id)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "got you", user, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (uh *UserHandler) HandlerUpdateUser(c *fiber.Ctx) error {
+func (uh *UserHandler) HandlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params models.UpdateUser
 
-	strID := c.Params("id")
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
 	if err := readJSON(c, &params); err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	userResp, err := uh.Store.UpdateUser(c.Context(), nil, id, &params)
+	userResp, err := uh.Store.UpdateUser(c, nil, id, &params)
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource updated successfully", userResp, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (uh *UserHandler) HandlerDeleteUser(c *fiber.Ctx) error {
-	strID := c.Params("id")
+func (uh *UserHandler) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)
 	if err != nil {
-		badRequestError(c)
-		return err
+		badRequestError(err)
+		return
 	}
 
-	if err := uh.Store.DeleteUserByID(c.Context(), nil, id); err != nil {
-		internalServerError(c)
-		return err
+	if err := uh.Store.DeleteUserByID(c, nil, id); err != nil {
+		internalServerError(err)
+		return
 	}
 
 	err = writeJSON(c, http.StatusOK, "resource deleted successfully", nil, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }

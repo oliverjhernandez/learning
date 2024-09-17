@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"casita/internal/models"
 	"casita/internal/validator"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 type Envelope struct {
@@ -22,7 +21,8 @@ type Envelope struct {
 	Error    interface{}      `json:"error,omitempty"`
 }
 
-func writeJSON(c *fiber.Ctx, status int, message string, data interface{}, metadata *models.Metadata, error string) error {
+func writeJSON(w http.ResponseWriter, r *http.Request, status int, message string, data interface{}, metadata *models.Metadata, error string) error {
+	c := r.Context()
 	response := Envelope{
 		Metadata: metadata,
 		Status:   strconv.Itoa(status),
@@ -31,7 +31,7 @@ func writeJSON(c *fiber.Ctx, status int, message string, data interface{}, metad
 		Error:    error,
 	}
 
-	c.Response().Header.Add("Content-Type", "application/json")
+	w.Header().Add("Content-Type", "application/json")
 
 	if err := c.Status(status).JSON(response); err != nil {
 		return err

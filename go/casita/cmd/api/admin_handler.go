@@ -1,20 +1,22 @@
 package api
 
 import (
-	"casita/internal/models"
+	"errors"
+	"net/http"
 
-	"github.com/gofiber/fiber/v2"
+	"casita/internal/models"
 )
 
-func AdminAuth(c *fiber.Ctx) {
-	user, ok := c.Context().UserValue("user").(*models.User)
+func AdminAuth(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	user, ok := c.Value("user").(*models.User)
 	if !ok {
-		unauthorizedError(c)
+		unauthorizedError(errors.New("unauthorizedError"))
 	}
 
 	if !*user.IsAdmin {
-		unauthorizedError(c)
+		unauthorizedError(errors.New("unauthorizedError"))
 	}
 
-	c.Next()
+	// c.Next()
 }

@@ -9,7 +9,6 @@ import (
 	"casita/internal/db"
 	"casita/internal/models"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -38,22 +37,23 @@ type genericResponse struct {
 	Msg  string `json:"msg"`
 }
 
-func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
+func (ah *AuthHandler) HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var params AuthParams
 	if err := readJSON(c, &params); err != nil {
-		invalidCredentials(c)
-		return err
+		unauthorizedError(err)
+		return
 	}
 
-	user, err := ah.userStore.GetUserByEmail(c.Context(), nil, params.Email)
+	user, err := ah.userStore.GetUserByEmail(c, nil, params.Email)
 	if err != nil {
-		invalidCredentials(c)
-		return err
+		unauthorizedError(err)
+		return
 	}
 
 	if !models.IsValidPasswd(user.Passwd, params.Passwd) {
-		invalidCredentials(c)
-		return err
+		unauthorizedError(err)
+		return
 	}
 
 	// TODO: Should be better to send this in HTTP headers
@@ -66,11 +66,11 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 
 	err = writeJSON(c, http.StatusOK, "authenticated", resp, nil, "")
 	if err != nil {
-		internalServerError(c)
-		return err
+		internalServerError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
 func CreateTokenFromUser(user *models.User) string {

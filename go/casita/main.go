@@ -2,15 +2,17 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	"casita/cmd/api"
 	"casita/internal/db"
 	"casita/internal/jsonlog"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type dbParams struct {
@@ -43,7 +45,7 @@ type app struct {
 }
 
 func main() {
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+	logger := jsonlog.New(os.Stderr, jsonlog.LevelInfo)
 	cfg := config{
 		env:  "dev",
 		port: 4000,
@@ -78,18 +80,21 @@ func main() {
 		AccountStore: db.NewPGAccountStore(client),
 	}
 
-	fiberConfig := fiber.Config{ErrorHandler: api.ErrorHandler}
-	fiberApp := fiber.New(fiberConfig)
+	chi := chi.NewRouter()
+	chi.Use(middleware.Timeout(60 * time.Second))
+	// chi.Use(middleware.Logger(logger))
+
 	app.logger.PrintInfo("starting server", map[string]string{
 		"address": app.config.db.host,
 		"env":     app.config.env,
 	})
 
-	listenAddr := flag.String("listenAddr", ":4000", "The listen address of the API server")
+	// listenAddr := flag.String("listenAddr", ":4000", "The listen address of the API server")
 
-	api.InitializeRoutes(stores, fiberApp)
+	api.InitializeRoutes(stores, chi)
 
-	err = fiberApp.Listen(*listenAddr)
+	// err = fiberApp.Listen(*listenAddr)
+	http.ListenAndServe(":3000", chi)
 	if err != nil {
 		app.logger.PrintFatal(err, nil)
 	}

@@ -3,51 +3,70 @@ package api
 import (
 	"casita/internal/db"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
-func InitializeRoutes(stores *db.Store, app *fiber.App) {
+func InitializeRoutes(stores *db.Store, app *chi.Mux) {
 	var (
 		txHandler      = NewTransactionHandler(stores)
 		userHandler    = NewUserHandler(stores)
 		creditHandler  = NewCreditHandler(stores)
 		accountHandler = NewAccountHandler(stores)
 		authHandler    = NewAuthHandler(stores)
-
-		appv1 = app.Group("/v1")
-		// appv1 = fiberApp.Group("/v1", api.JWTAuthentication(stores.UserStore))
-		api = app.Group("/api")
-		// admin = appv1.Group("/admin", api.AdminAuth)
 	)
 
-	// Auth
-	api.Post("/auth", authHandler.HandleAuthenticate)
+	app.Route("/v1", func(r chi.Router) {
+		// Transaction CRUD Endpoints
+		app.Route("/transactions", func(r chi.Router) {
+			r.Get("/", txHandler.HandlerGetTransactions)
+			r.Post("/", txHandler.HandlerPostTransaction)
 
-	// Transaction CRUD Endpoints
-	appv1.Get("/transactions", txHandler.HandlerGetTransactions)
-	appv1.Get("/transaction/:id", txHandler.HandlerGetTransaction)
-	appv1.Post("/transaction", txHandler.HandlerPostTransaction)
-	appv1.Delete("/transaction/:id", txHandler.HandlerDeleteTransaction)
-	appv1.Patch("/transaction/:id", txHandler.HandlerUpdateTransaction)
+			app.Route("/{txnID}", func(r chi.Router) {
+				r.Get("/", txHandler.HandlerGetTransaction)
+				r.Delete("/", txHandler.HandlerDeleteTransaction)
+				r.Patch("/", txHandler.HandlerUpdateTransaction)
+			})
+		})
 
-	// Credit CRUD Endpoints
-	appv1.Get("/credits", creditHandler.HandlerGetCredits)
-	appv1.Get("/credit/:id", creditHandler.HandlerGetCredit)
-	appv1.Post("/credit", creditHandler.HandlerPostCredit)
-	appv1.Delete("/credit/:id", creditHandler.HandlerDeleteCredit)
-	appv1.Patch("/credit/:id", creditHandler.HandlerUpdateCredit)
+		// Credit CRUD Endpoints
+		app.Route("/credits", func(r chi.Router) {
+			r.Get("/", creditHandler.HandlerGetCredits)
+			r.Post("/", creditHandler.HandlerPostCredit)
 
-	// User CRUD Endpoints
-	appv1.Get("/users", userHandler.HandlerGetUsers)
-	appv1.Get("/user/:id", userHandler.HandlerGetUser)
-	appv1.Post("/user", userHandler.HandlerPostUser)
-	appv1.Delete("/user/:id", userHandler.HandlerDeleteUser)
-	appv1.Patch("/user/:id", userHandler.HandlerUpdateUser)
+			app.Route("/{creditID}", func(r chi.Router) {
+				r.Get("/:id", creditHandler.HandlerGetCredit)
+				r.Delete("/:id", creditHandler.HandlerDeleteCredit)
+				r.Patch("/:id", creditHandler.HandlerUpdateCredit)
+			})
+		})
 
-	// Account CRUD Endpoints
-	appv1.Get("/accounts", accountHandler.HandlerGetAccounts)
-	appv1.Get("/account/:id", accountHandler.HandlerGetAccount)
-	appv1.Post("/account", accountHandler.HandlerPostAccount)
-	appv1.Delete("/account/:id", accountHandler.HandlerDeleteAccount)
-	appv1.Patch("/account/:id", accountHandler.HandlerUpdateAccount)
+		// User CRUD Endpoints
+		app.Route("/users", func(r chi.Router) {
+			r.Get("/", userHandler.HandlerGetUsers)
+			r.Post("/", userHandler.HandlerPostUser)
+
+			app.Route("/{userID}", func(r chi.Router) {
+				r.Get("/:id", userHandler.HandlerGetUser)
+				r.Delete("/:id", userHandler.HandlerDeleteUser)
+				r.Patch("/:id", userHandler.HandlerUpdateUser)
+			})
+		})
+
+		// Account CRUD Endpoints
+		app.Route("/accounts", func(r chi.Router) {
+			r.Get("/", accountHandler.HandlerGetAccounts)
+			r.Post("/", accountHandler.HandlerPostAccount)
+
+			app.Route("/{accID}", func(r chi.Router) {
+				r.Get("/", accountHandler.HandlerGetAccount)
+				r.Delete("/", accountHandler.HandlerDeleteAccount)
+				r.Patch("/", accountHandler.HandlerUpdateAccount)
+			})
+		})
+	})
+
+	app.Route("/api", func(r chi.Router) {
+		// Auth
+		r.Post("/auth", authHandler.HandleAuthenticate)
+	})
 }
