@@ -25,7 +25,7 @@ func NewUserHandler(s *db.Store) *UserHandler {
 func (uh *UserHandler) HandlerPostUser(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params models.CreateUser
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -48,7 +48,7 @@ func (uh *UserHandler) HandlerPostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", userResp, nil, "")
+	err = writeJSON(w, userResp)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -65,7 +65,7 @@ func (uh *UserHandler) HandlerGetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", users, nil, "")
+	err = writeJSON(w, users)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -90,7 +90,7 @@ func (uh *UserHandler) HandlerGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", user, nil, "")
+	err = writeJSON(w, user)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -110,7 +110,7 @@ func (uh *UserHandler) HandlerUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -121,7 +121,7 @@ func (uh *UserHandler) HandlerUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource updated successfully", userResp, nil, "")
+	err = writeJSON(w, userResp)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -145,7 +145,7 @@ func (uh *UserHandler) HandlerDeleteUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted successfully", nil, nil, "")
+	err = writeJSON(w, nil)
 	if err != nil {
 		internalServerError(err)
 		return

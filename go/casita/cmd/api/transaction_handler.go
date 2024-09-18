@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params models.CreateTransaction
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -48,7 +49,7 @@ func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", tran, nil, "")
+	err = writeJSON(w, tran)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -59,20 +60,24 @@ func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *h
 
 func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	input := models.ListTransactions{}
+	i := models.GetTransactions{}
 	v := validator.New()
 
-	input.Concept = readString(c, "concept", "")
-	input.Description = readString(c, "description", "")
-	input.Relevance = models.Relevance(readInt(c, "relevance", 0, v))
-	input.Value = int32(readInt(c, "value", -1, v))
+	var jsonBody models.CreateTransaction
+	if err := json.NewDecoder(r.Body).Decode(jsonBody); err != nil {
+	}
 
-	input.Page = readInt(c, "page", 1, v)
-	input.PageSize = readInt(c, "page_size", 10, v)
-	input.Sort = readString(c, "sort", "value")
-	input.SortSafeList = []string{"value", "-value", "concept", "-concept", "relevance", "-relevance", "day", "-day", "month", "-month"}
+	i.Concept = readString(r, "concept", "")
+	i.Description = readString(r, "description", "")
+	i.Relevance = models.Relevance(readInt(r, "relevance", 0, v))
+	i.Value = int32(readInt(r, "value", -1, v))
 
-	if models.ValidateFilters(v, input.Filters); !v.Valid() {
+	i.Page = readInt(r, "page", 1, v)
+	i.PageSize = readInt(r, "page_size", 10, v)
+	i.Sort = readString(r, "sort", "value")
+	i.SortSafeList = []string{"value", "-value", "concept", "-concept", "relevance", "-relevance", "day", "-day", "month", "-month"}
+
+	if models.ValidateFilters(v, i.Filters); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		return
 	}
@@ -82,13 +87,13 @@ func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *h
 		return
 	}
 
-	txns, metadata, err := th.Store.GetAllTransactions(c, nil, input.Concept, input.Value, input.Description, input.Filters)
+	txns, _, err := th.Store.GetAllTransactions(c, nil, i.Concept, i.Value, i.Description, i.Filters)
 	if err != nil {
 		notFoundError(err)
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", &txns, &metadata, "")
+	err = writeJSON(w, &txns)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -113,7 +118,7 @@ func (th *TransactionHandler) HandlerGetTransaction(w http.ResponseWriter, r *ht
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", &txn, nil, "")
+	err = writeJSON(w, &txn)
 	if err != nil {
 		internalServerError(err)
 	}
@@ -133,7 +138,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -144,7 +149,7 @@ func (th *TransactionHandler) HandlerUpdateTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource updated successfully", &tran, nil, "")
+	err = writeJSON(w, &tran)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -167,7 +172,7 @@ func (th *TransactionHandler) HandlerDeleteTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resorce deleted successfully", nil, nil, "")
+	err = writeJSON(w, nil)
 	if err != nil {
 		internalServerError(err)
 		return

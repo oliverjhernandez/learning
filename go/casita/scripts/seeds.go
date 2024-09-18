@@ -145,7 +145,15 @@ func seed() {
 }
 
 func main() {
-	_, client, err := db.NewStore()
+	dbParams := db.DBParams{
+		Host:   "localhost",
+		Port:   "5432",
+		Name:   "casita",
+		User:   "postgres",
+		Passwd: "secret",
+		SSL:    "disable",
+	}
+	client, err := db.ConnectSQL(dbParams)
 	if err != nil {
 		log.Printf("initialization failed: %v", err)
 		os.Exit(1)

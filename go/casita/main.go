@@ -1,121 +1,61 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
+	"context"
+	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"casita/cmd/api"
 	"casita/internal/db"
-	"casita/internal/jsonlog"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
 )
 
-type dbParams struct {
-	host   string
-	port   string
-	name   string
-	user   string
-	passwd string
-	ssl    string
-
-	maxOpenConns int
-	maxIdleConns int
-	maxIdleTime  string
-}
-
-type config struct {
-	env     string
-	port    int
-	db      dbParams
-	limiter struct {
-		rps     float64
-		burst   int
-		enabled bool
-	}
-}
-
-type app struct {
-	logger *jsonlog.Logger
-	config config
-}
-
 func main() {
-	logger := jsonlog.New(os.Stderr, jsonlog.LevelInfo)
-	cfg := config{
-		env:  "dev",
-		port: 4000,
-		db: dbParams{
-			host:   "localhost",
-			port:   "5432",
-			name:   "casita",
-			user:   "postgres",
-			passwd: "secret",
-			ssl:    "disable",
+	logger := httplog.NewLogger("httplog", httplog.Options{
+		JSON:             true,
+		LogLevel:         slog.LevelDebug,
+		Concise:          true,
+		RequestHeaders:   true,
+		MessageFieldName: "message",
+		TimeFieldFormat:  time.RFC850,
+		Tags: map[string]string{
+			"version": "v1",
+			"env":     "dev",
 		},
-	}
+		QuietDownRoutes: []string{
+			"/",
+			"/healthz",
+		},
+		QuietDownPeriod: 10 * time.Second,
+		SourceFieldName: "source",
+	})
 
-	app := &app{
-		logger: logger,
-		config: cfg,
-	}
-
-	client, err := connectSQL(app.config.db)
-	if err != nil {
-		app.logger.PrintFatal(err, nil)
-	}
-
-	app.logger.PrintInfo("database connection pool stablished", nil)
-	defer client.Close()
-
-	stores := &db.Store{
-		DB:           client,
-		UserStore:    db.NewPGUserStore(client),
-		TxnStore:     db.NewPGTransactionStore(client),
-		CreditStore:  db.NewPGCreditStore(client),
-		AccountStore: db.NewPGAccountStore(client),
+	cfg := db.DBCfg{
+		Env:  "dev",
+		Port: 4000,
+		DB: db.DBParams{
+			Host:   "localhost",
+			Port:   "5432",
+			Name:   "casita",
+			User:   "postgres",
+			Passwd: "secret",
+			SSL:    "disable",
+		},
 	}
 
 	chi := chi.NewRouter()
 	chi.Use(middleware.Timeout(60 * time.Second))
-	// chi.Use(middleware.Logger(logger))
+	chi.Use(httplog.RequestLogger(logger))
 
-	app.logger.PrintInfo("starting server", map[string]string{
-		"address": app.config.db.host,
-		"env":     app.config.env,
-	})
+	api.InitializeRoutes(chi, cfg, logger)
 
-	// listenAddr := flag.String("listenAddr", ":4000", "The listen address of the API server")
+	logger.Log(context.TODO(), 0, "starting server")
 
-	api.InitializeRoutes(stores, chi)
-
-	// err = fiberApp.Listen(*listenAddr)
-	http.ListenAndServe(":3000", chi)
-	if err != nil {
-		app.logger.PrintFatal(err, nil)
+	if err := http.ListenAndServe(":3000", chi); err != nil {
+		logger.Error(err.Error())
 	}
-}
-
-func connectSQL(dbParams dbParams) (*sql.DB, error) {
-	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
-		dbParams.host,
-		dbParams.port,
-		dbParams.name,
-		dbParams.user,
-		dbParams.passwd,
-		dbParams.ssl)
-
-	db, err := sql.Open("pgx", connectionString)
-	if err != nil {
-		return nil, err
-	}
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }

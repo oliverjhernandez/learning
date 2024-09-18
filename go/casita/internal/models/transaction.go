@@ -59,7 +59,7 @@ type UpdateTransaction struct {
 	Value       int32     `json:"value"`
 }
 
-type ListTransactions struct {
+type GetTransactions struct {
 	Concept     string    `json:"concept"`
 	Description string    `json:"description"`
 	Relevance   Relevance `json:"relevance"`

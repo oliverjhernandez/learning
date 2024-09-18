@@ -1,12 +1,31 @@
 package api
 
 import (
+	"context"
+
 	"casita/internal/db"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httplog/v2"
 )
 
-func InitializeRoutes(stores *db.Store, app *chi.Mux) {
+func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
+	client, err := db.ConnectSQL(dbCfg.DB)
+	if err != nil {
+		logger.Log(context.TODO(), 8, err.Error())
+	}
+
+	logger.Log(context.TODO(), 0, "database connection pool stablished")
+	defer client.Close()
+
+	stores := &db.Store{
+		DB:           client,
+		UserStore:    db.NewPGUserStore(client),
+		TxnStore:     db.NewPGTransactionStore(client),
+		CreditStore:  db.NewPGCreditStore(client),
+		AccountStore: db.NewPGAccountStore(client),
+	}
+
 	var (
 		txHandler      = NewTransactionHandler(stores)
 		userHandler    = NewUserHandler(stores)

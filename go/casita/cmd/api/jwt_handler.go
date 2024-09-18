@@ -8,8 +8,6 @@ import (
 	"casita/internal/db"
 
 	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func JWTAuthentication(userStore db.UserStore) fiber.Handler {

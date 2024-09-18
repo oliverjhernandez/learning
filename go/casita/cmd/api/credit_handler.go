@@ -30,7 +30,7 @@ func (ch *CreditHandler) HandlerGetCredits(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credits, nil, "")
+	err = writeJSON(w, credits)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -55,7 +55,7 @@ func (ch *CreditHandler) HandlerGetCredit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credit, nil, "")
+	err = writeJSON(w, credit)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -67,7 +67,7 @@ func (ch *CreditHandler) HandlerGetCredit(w http.ResponseWriter, r *http.Request
 func (ch *CreditHandler) HandlerPostCredit(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params models.CreateCredit
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -90,7 +90,7 @@ func (ch *CreditHandler) HandlerPostCredit(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", credResp, nil, "")
+	err = writeJSON(w, credResp)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -110,7 +110,7 @@ func (ch *CreditHandler) HandlerUpdateCredit(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -122,7 +122,7 @@ func (ch *CreditHandler) HandlerUpdateCredit(w http.ResponseWriter, r *http.Requ
 	}
 
 	// TODO: Standardize messages
-	err = writeJSON(c, http.StatusOK, "updated successfully", credResp, nil, "")
+	err = writeJSON(w, credResp)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -146,7 +146,7 @@ func (ch *CreditHandler) HandlerDeleteCredit(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
+	err = writeJSON(w, nil)
 	if err != nil {
 		internalServerError(err)
 		return

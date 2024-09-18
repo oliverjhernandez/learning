@@ -11,6 +11,8 @@ import (
 
 	"casita/internal/models"
 	"casita/internal/validator"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Envelope struct {
@@ -21,29 +23,21 @@ type Envelope struct {
 	Error    interface{}      `json:"error,omitempty"`
 }
 
-func writeJSON(w http.ResponseWriter, r *http.Request, status int, message string, data interface{}, metadata *models.Metadata, error string) error {
-	c := r.Context()
-	response := Envelope{
-		Metadata: metadata,
-		Status:   strconv.Itoa(status),
-		Message:  message,
-		Data:     data,
-		Error:    error,
-	}
-
+func writeJSON(w http.ResponseWriter, dst interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
 
-	if err := c.Status(status).JSON(response); err != nil {
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(dst); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func readJSON(c *fiber.Ctx, dst interface{}) error {
+func readJSON(r *http.Request, dst interface{}) error {
 	maxBytes := 1_048_576
 
-	err := c.BodyParser(&dst)
+	err := json.NewDecoder(r.Body).Decode(dst)
 	if err != nil {
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
@@ -75,9 +69,8 @@ func readJSON(c *fiber.Ctx, dst interface{}) error {
 	return nil
 }
 
-// NOTE: Not necessary when using Fiber
-func readString(c *fiber.Ctx, key string, defaultValue string) string {
-	s := c.Query(key, defaultValue)
+func readString(r *http.Request, key string, defaultValue string) string {
+	s := chi.URLParam(r, "key")
 
 	if s == "" {
 		return defaultValue
@@ -86,9 +79,8 @@ func readString(c *fiber.Ctx, key string, defaultValue string) string {
 	return s
 }
 
-// NOTE: Not necessary when using Fiber
-func readInt(c *fiber.Ctx, key string, defaultValue int, v *validator.Validator) int {
-	s := c.Query(key)
+func readInt(r *http.Request, key string, defaultValue int, v *validator.Validator) int {
+	s := chi.URLParam(r, key)
 	if s == "" {
 		return defaultValue
 	}

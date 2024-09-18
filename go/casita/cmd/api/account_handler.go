@@ -27,7 +27,7 @@ var params *models.CreateAccount
 func (ah *AccountHandler) HandlerPostAccount(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params models.CreateAccount
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -50,7 +50,7 @@ func (ah *AccountHandler) HandlerPostAccount(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource created successfully", acc, nil, "")
+	err = writeJSON(w, acc)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -67,7 +67,7 @@ func (ah *AccountHandler) HandlerGetAccounts(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", accs, nil, "")
+	err = writeJSON(w, accs)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -91,7 +91,7 @@ func (ah *AccountHandler) HandlerGetAccount(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "got you", acc, nil, "")
+	err = writeJSON(w, acc)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -111,7 +111,7 @@ func (ah *AccountHandler) HandlerUpdateAccount(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
@@ -122,7 +122,7 @@ func (ah *AccountHandler) HandlerUpdateAccount(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "updated successfully", acc, nil, "")
+	err = writeJSON(w, acc)
 	if err != nil {
 		internalServerError(err)
 		return
@@ -145,7 +145,7 @@ func (ah *AccountHandler) HandlerDeleteAccount(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = writeJSON(c, http.StatusOK, "resource deleted", nil, nil, "")
+	err = writeJSON(w, nil)
 	if err != nil {
 		internalServerError(err)
 		return

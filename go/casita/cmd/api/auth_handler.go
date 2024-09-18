@@ -40,7 +40,7 @@ type genericResponse struct {
 func (ah *AuthHandler) HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params AuthParams
-	if err := readJSON(c, &params); err != nil {
+	if err := readJSON(r, &params); err != nil {
 		unauthorizedError(err)
 		return
 	}
@@ -64,7 +64,7 @@ func (ah *AuthHandler) HandleAuthenticate(w http.ResponseWriter, r *http.Request
 
 	fmt.Println("Authenticated -> ", user.FirstName)
 
-	err = writeJSON(c, http.StatusOK, "authenticated", resp, nil, "")
+	err = writeJSON(w, resp)
 	if err != nil {
 		internalServerError(err)
 		return
