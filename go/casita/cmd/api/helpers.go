@@ -23,15 +23,10 @@ type Envelope struct {
 	Error    interface{}      `json:"error,omitempty"`
 }
 
-func writeJSON(w http.ResponseWriter, dst interface{}) error {
+func writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
-
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(dst); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Encode(data)
 }
 
 func readJSON(r *http.Request, dst interface{}) error {

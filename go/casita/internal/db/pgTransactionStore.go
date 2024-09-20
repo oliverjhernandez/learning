@@ -13,7 +13,6 @@ import (
 type TransactionStore interface {
 	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error)
 	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
-	// GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, error)
 	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, models.Metadata, error)
 	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error)
 	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error

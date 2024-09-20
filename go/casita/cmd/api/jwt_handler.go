@@ -1,51 +1,47 @@
 package api
 
 import (
-	"fmt"
 	"os"
-	"time"
-
-	"casita/internal/db"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTAuthentication(userStore db.UserStore) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		fmt.Println("-- JWT auth")
-
-		token := c.Get("X-Api-Token")
-		if len(token) == 0 {
-			err := unauthorizedError(c)
-			return err
-		}
-		claims, err := validateToken(token)
-		if err != nil {
-			err := unauthorizedError(c)
-			return err
-		}
-
-		// Checks token expiration
-		fmt.Println(claims)
-		expiresFloat := claims["expires"].(float64)
-		expires := int64(expiresFloat)
-		if time.Now().Unix() > expires {
-			err := unauthorizedError(c)
-			return err
-		}
-
-		userID := claims["id"].(float64)
-		user, err := userStore.GetUserByID(c.Context(), nil, int(userID))
-		if err != nil {
-			err := unauthorizedError(c)
-			return err
-
-		}
-		c.Context().SetUserValue("user", user)
-
-		return c.Next()
-	}
-}
+// func JWTAuthentication(userStore db.UserStore) fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		fmt.Println("-- JWT auth")
+//
+// 		token := c.Get("X-Api-Token")
+// 		if len(token) == 0 {
+// 			err := unauthorizedError(c)
+// 			return err
+// 		}
+// 		claims, err := validateToken(token)
+//		if err != nil {
+// 			err := unauthorizedError(c)
+// 			return err
+// 		}
+//
+// 		// Checks token expiration
+// 		fmt.Println(claims)
+// 		expiresFloat := claims["expires"].(float64)
+// 		expires := int64(expiresFloat)
+// 		if time.Now().Unix() > expires {
+// 			err := unauthorizedError(c)
+// 			return err
+// 		}
+//
+// 		userID := claims["id"].(float64)
+//		user, err := userStore.GetUserByID(c.Context(), nil, int(userID))
+//		if err != nil {
+// 			err := unauthorizedError(c)
+// 			return err
+//
+// 		}
+// 		c.Context().SetUserValue("user", user)
+//
+// 		return c.Next()
+// 	}
+// }
 
 func validateToken(tokenStr string) (jwt.MapClaims, error) {
 	var err error

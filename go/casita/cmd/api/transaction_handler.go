@@ -1,8 +1,8 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -63,10 +63,6 @@ func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *h
 	i := models.GetTransactions{}
 	v := validator.New()
 
-	var jsonBody models.CreateTransaction
-	if err := json.NewDecoder(r.Body).Decode(jsonBody); err != nil {
-	}
-
 	i.Concept = readString(r, "concept", "")
 	i.Description = readString(r, "description", "")
 	i.Relevance = models.Relevance(readInt(r, "relevance", 0, v))
@@ -79,27 +75,36 @@ func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *h
 
 	if models.ValidateFilters(v, i.Filters); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		writeJSON(w, map[string]string{"error": "unprocessableEntityError"})
 		return
 	}
 
 	if !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		writeJSON(w, map[string]string{"error": "unprocessableEntityError"})
 		return
 	}
 
 	txns, _, err := th.Store.GetAllTransactions(c, nil, i.Concept, i.Value, i.Description, i.Filters)
 	if err != nil {
 		notFoundError(err)
+		w.WriteHeader(http.StatusNotFound)
+		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
 
+	fmt.Println(txns)
+
+	w.WriteHeader(http.StatusOK)
 	err = writeJSON(w, &txns)
 	if err != nil {
 		internalServerError(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
-
-	return
 }
 
 func (th *TransactionHandler) HandlerGetTransaction(w http.ResponseWriter, r *http.Request) {

@@ -70,8 +70,6 @@ func (uh *UserHandler) HandlerGetUsers(w http.ResponseWriter, r *http.Request) {
 		internalServerError(err)
 		return
 	}
-
-	return
 }
 
 func (uh *UserHandler) HandlerGetUser(w http.ResponseWriter, r *http.Request) {

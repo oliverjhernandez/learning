@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog/v2"
+	"github.com/go-chi/render"
 )
 
 func main() {
@@ -50,12 +51,15 @@ func main() {
 	chi := chi.NewRouter()
 	chi.Use(middleware.Timeout(60 * time.Second))
 	chi.Use(httplog.RequestLogger(logger))
+	chi.Use(middleware.Recoverer)
+	chi.Use(middleware.URLFormat)
+	chi.Use(render.SetContentType(render.ContentTypeJSON))
 
 	api.InitializeRoutes(chi, cfg, logger)
 
 	logger.Log(context.TODO(), 0, "starting server")
 
-	if err := http.ListenAndServe(":3000", chi); err != nil {
+	if err := http.ListenAndServe(":4000", chi); err != nil {
 		logger.Error(err.Error())
 	}
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 
 	"casita/internal/db"
 
@@ -16,7 +17,11 @@ func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
 	}
 
 	logger.Log(context.TODO(), 0, "database connection pool stablished")
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			logger.Log(context.TODO(), 8, "error closing connection to db: "+err.Error())
+		}
+	}()
 
 	stores := &db.Store{
 		DB:           client,
@@ -34,13 +39,26 @@ func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
 		authHandler    = NewAuthHandler(stores)
 	)
 
+	app.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("root"))
+	})
+
+	app.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
+
+	// INFO: Panic endpoint for testing
+	app.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test")
+	})
+
 	app.Route("/v1", func(r chi.Router) {
 		// Transaction CRUD Endpoints
-		app.Route("/transactions", func(r chi.Router) {
+		r.Route("/transactions", func(r chi.Router) {
 			r.Get("/", txHandler.HandlerGetTransactions)
 			r.Post("/", txHandler.HandlerPostTransaction)
 
-			app.Route("/{txnID}", func(r chi.Router) {
+			r.Route("/{txnID}", func(r chi.Router) {
 				r.Get("/", txHandler.HandlerGetTransaction)
 				r.Delete("/", txHandler.HandlerDeleteTransaction)
 				r.Patch("/", txHandler.HandlerUpdateTransaction)
@@ -48,35 +66,35 @@ func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
 		})
 
 		// Credit CRUD Endpoints
-		app.Route("/credits", func(r chi.Router) {
+		r.Route("/credits", func(r chi.Router) {
 			r.Get("/", creditHandler.HandlerGetCredits)
 			r.Post("/", creditHandler.HandlerPostCredit)
 
-			app.Route("/{creditID}", func(r chi.Router) {
-				r.Get("/:id", creditHandler.HandlerGetCredit)
-				r.Delete("/:id", creditHandler.HandlerDeleteCredit)
-				r.Patch("/:id", creditHandler.HandlerUpdateCredit)
+			r.Route("/{credID}", func(r chi.Router) {
+				r.Get("/", creditHandler.HandlerGetCredit)
+				r.Delete("/", creditHandler.HandlerDeleteCredit)
+				r.Patch("/", creditHandler.HandlerUpdateCredit)
 			})
 		})
 
 		// User CRUD Endpoints
-		app.Route("/users", func(r chi.Router) {
+		r.Route("/users", func(r chi.Router) {
 			r.Get("/", userHandler.HandlerGetUsers)
 			r.Post("/", userHandler.HandlerPostUser)
 
-			app.Route("/{userID}", func(r chi.Router) {
-				r.Get("/:id", userHandler.HandlerGetUser)
-				r.Delete("/:id", userHandler.HandlerDeleteUser)
-				r.Patch("/:id", userHandler.HandlerUpdateUser)
+			r.Route("/{userID}", func(r chi.Router) {
+				r.Get("/", userHandler.HandlerGetUser)
+				r.Delete("/", userHandler.HandlerDeleteUser)
+				r.Patch("/", userHandler.HandlerUpdateUser)
 			})
 		})
 
 		// Account CRUD Endpoints
-		app.Route("/accounts", func(r chi.Router) {
+		r.Route("/accounts", func(r chi.Router) {
 			r.Get("/", accountHandler.HandlerGetAccounts)
 			r.Post("/", accountHandler.HandlerPostAccount)
 
-			app.Route("/{accID}", func(r chi.Router) {
+			r.Route("/{accID}", func(r chi.Router) {
 				r.Get("/", accountHandler.HandlerGetAccount)
 				r.Delete("/", accountHandler.HandlerDeleteAccount)
 				r.Patch("/", accountHandler.HandlerUpdateAccount)
