@@ -36,9 +36,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
   });
 
   return (
-    <table>
-      <thead>
-        <tr>
+    <table className="producttable">
+      <thead className="producttable-thead">
+        <tr className="producttable-row">
           <th>Name</th>
           <th>Price</th>
         </tr>

@@ -21,6 +21,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       />
       <label className="label">
         <input
+          className="searchbar-checkbox"
           type="checkbox"
           checked={inStockOnly}
           onChange={(e) => onInStockOnlyChange(e.target.checked)}
