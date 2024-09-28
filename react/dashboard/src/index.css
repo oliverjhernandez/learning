@@ -250,6 +250,8 @@ a {
   border-radius: 50%;
   object-fit: cover;
   margin: 0 10px 0 0;
+  background-position: center;
+  background-size: cover;
 }
 
 .profile-picture-lg {
@@ -258,6 +260,8 @@ a {
   border-radius: 50%;
   margin: 0 15px 0 25px;
   object-fit: cover;
+  background-position: center;
+  background-size: cover;
 }
 
 .hello-menu {
@@ -316,6 +320,8 @@ a {
   border-radius: 50%;
   object-fit: cover;
   margin: 0 10px 0 0;
+  background-position: center;
+  background-size: cover;
 }
 
 .trending-item-body {
