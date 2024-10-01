@@ -1,0 +1,181 @@
+.header-background {
+  background: linear-gradient(165deg, #0991b1 65%, white 35%);
+  min-height: 100vh;
+}
+
+.body-background {
+  min-height: 100vh;
+}
+
+.footer-background {
+  background-color: #0991b1;
+}
+
+.header-container {
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-picture {
+  height: 80%;
+  width: auto;
+  object-fit: cover;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+
+.header-card {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 4% 3%;
+  width: 50%;
+  height: 60%;
+  object-fit: cover;
+  background-color: white;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+
+.header-card-title {
+  flex: 1;
+  font-family: "Playfair Display";
+  font-size: 1.8rem;
+}
+
+.header-card-body {
+  flex: 3;
+  font-family: "Roboto";
+  line-height: 1.5;
+}
+
+.header-card-icons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.social-icons {
+  margin: 0 5px;
+}
+
+.body-cards-container {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 50px 20px;
+}
+
+.body-title {
+  font-family: "Playfair Display";
+  font-size: 1.5rem;
+  padding-left: 20px;
+}
+
+.body-cards-card {
+  display: grid;
+  grid-template-rows: 60% 40%;
+  height: 400px;
+  width: auto;
+  margin: 30px 30px;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+
+.body-cards-card-top {
+  background-color: lightblue;
+  align-content: center;
+  justify-content: end;
+}
+
+.body-cards-card-picture {
+  font-family: "Playfair Display";
+  font-size: 2rem;
+  text-align: center;
+  background-color: lightblue;
+}
+
+.body-cards-card-body {
+  display: grid;
+  padding: 20px 10px 20px 20px;
+  grid-template-rows: 1fr 2fr;
+  grid-template-columns: 1fr;
+}
+
+.body-cards-card-body-header {
+  display: flex;
+  font-family: "Playfair Display";
+}
+
+.body-cards-card-body-title {
+  font-size: 1.2rem;
+}
+
+.body-cards-card-body-description {
+  font-family: Roboto;
+  color: lightgray;
+}
+
+.body-cards-card-body-icons {
+  display: flex;
+  align-content: center;
+  margin-left: auto;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  grid-template-rows: 1fr;
+  min-height: 100vh;
+  padding: 50px 40px;
+}
+
+.footer-picture {
+  height: 600px;
+  object-fit: cover;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+  justify-self: center;
+  align-self: center;
+}
+
+.footer-contact-container {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+}
+
+.footer-contact-title {
+  font-family: "Playfair Display";
+  justify-self: center;
+  font-size: 4rem;
+  padding: 20px 0;
+  color: white;
+}
+
+.footer-contact-message {
+  font-family: "Roboto";
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 300;
+  padding: 20px 0;
+}
+
+.footer-contact-data {
+  display: flex;
+  flex-direction: column;
+  font-family: Roboto;
+  color: white;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.footer-contact-data-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-social-icons {
+  padding: 20px 10px;
+}
