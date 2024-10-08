@@ -1,0 +1,12 @@
+.main-container {
+  display: grid;
+  justify-items: center;
+}
+
+.main {
+  width: 50vw;
+  height: 100vh;
+  background-color: lightgray;
+  border-radius: 10px;
+  padding: 20px;
+}

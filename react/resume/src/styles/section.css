@@ -1,0 +1,38 @@
+.section {
+  width: 100%;
+  height: 300px;
+  background-color: none;
+  margin: 20px;
+  border-radius: 10px;
+}
+
+.section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: white;
+  font-family: Quicksand, sans-serif;
+}
+
+.section-body {
+  font-size: 1rem;
+  font-family: Oswald, sans-serif;
+  color: white;
+}
+
+.section-body-container {
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.section-body-item {
+  width: 100%;
+  background-color: black;
+  align-items: center;
+}
