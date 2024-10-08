@@ -1,0 +1,11 @@
+.header-container {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-family: 'Pacifico', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+}
