@@ -5,3 +5,7 @@
 body {
   @apply bg-primary h-screen;
 }
+
+.main {
+  @apply grid grid-cols-[1fr_3fr] gap-4;
+}

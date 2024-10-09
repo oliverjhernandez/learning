@@ -5,11 +5,16 @@ import { OverridableComponent } from '@mui/material/OverridableComponent'
 type ButtonProps = {
   name: string
   icon: OverridableComponent<SvgIconTypeMap<{}, 'svg'>>
+  onClick: () => void
 }
 
-const Button: React.FC<ButtonProps> = ({ name, icon: Icon }: ButtonProps) => {
+const Button: React.FC<ButtonProps> = ({
+  name,
+  icon: Icon,
+  onClick,
+}: ButtonProps) => {
   return (
-    <button className='btn'>
+    <button className='btn' onClick={onClick}>
       <div className='flex flex-row'>
         <div className='btn-item'>
           <Icon />

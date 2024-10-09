@@ -3,5 +3,5 @@
 @tailwind utilities;
 
 .sidebar {
-  @apply flex flex-col gap-3 w-1/5 p-5 bg-primary h-screen;
+  @apply flex flex-col gap-3  p-5 bg-primary h-screen;
 }
