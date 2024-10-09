@@ -6,6 +6,8 @@ function App() {
     <div className="main-container">
       <div className="main main-container">
         <Section />
+        <Section />
+        <Section />
       </div>
     </div>
   );

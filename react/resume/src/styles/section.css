@@ -1,7 +1,6 @@
 .section {
   width: 100%;
-  height: 300px;
-  background-color: none;
+  height: auto;
   margin: 20px;
   border-radius: 10px;
 }
@@ -13,9 +12,20 @@
 }
 
 .section-title {
-  font-size: 1.5rem;
+  display: grid;
+  grid-template-columns: max-content auto;
+  align-content: center;
+  font-size: 2rem;
   color: white;
   font-family: Quicksand, sans-serif;
+}
+
+hr {
+  padding: 0 20px;
+  background-color: white;
+  border: none;
+  height: 3px;
+  margin: 20px 10px;
 }
 
 .section-body {
@@ -32,7 +42,25 @@
 }
 
 .section-body-item {
-  width: 100%;
-  background-color: black;
+  display: grid;
+  grid-template-columns: auto;
   align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+}
+
+input {
+  height: auto;
+  width: 100%;
+  flex-grow: 1;
+  border-radius: 5px;
+  border: 1 1;
+  border-color: lightgray;
+  /* min-width: 200px; */
+}
+
+.label {
+  font-size: 1.2rem;
+  min-width: 75px;
 }

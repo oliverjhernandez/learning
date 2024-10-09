@@ -4,7 +4,8 @@
 }
 
 .main {
-  width: 50vw;
+  width: auto;
+  min-width: 50vw;
   height: 100vh;
   background-color: lightgray;
   border-radius: 10px;
