@@ -5,7 +5,7 @@ function Logo() {
   return (
     <div className='header-container'>
       <div>Casita</div>
-      <AccountCircleIcon fontSize='large' />
+      <AccountCircleIcon fontSize='inherit' />
     </div>
   )
 }
