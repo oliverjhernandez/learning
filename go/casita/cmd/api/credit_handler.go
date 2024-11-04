@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"casita/internal/db"
-	"casita/internal/models"
 	"casita/internal/validator"
 
 	"github.com/go-chi/chi/v5"
@@ -66,20 +65,20 @@ func (ch *CreditHandler) HandlerGetCredit(w http.ResponseWriter, r *http.Request
 
 func (ch *CreditHandler) HandlerPostCredit(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.CreateCredit
+	var params db.CreateCredit
 	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
 
-	cred, err := models.NewCreditFromParams(&params)
+	cred, err := db.NewCreditFromParams(&params)
 	if err != nil {
 		badRequestError((err))
 		return
 	}
 
 	v := validator.New()
-	if models.ValidateCredit(v, cred); !v.Valid() {
+	if db.ValidateCredit(v, cred); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		return
 	}
@@ -101,7 +100,7 @@ func (ch *CreditHandler) HandlerPostCredit(w http.ResponseWriter, r *http.Reques
 
 func (ch *CreditHandler) HandlerUpdateCredit(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.UpdateCredit
+	var params db.UpdateCredit
 
 	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)

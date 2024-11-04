@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"casita/internal/db"
-	"casita/internal/models"
 	"casita/internal/validator"
 
 	"github.com/go-chi/chi/v5"
@@ -24,20 +23,20 @@ func NewUserHandler(s *db.Store) *UserHandler {
 
 func (uh *UserHandler) HandlerPostUser(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.CreateUser
+	var params db.CreateUser
 	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
 
-	user, err := models.NewUserFromParams(&params)
+	user, err := db.NewUserFromParams(&params)
 	if err != nil {
 		badRequestError(err)
 		return
 	}
 
 	v := validator.New()
-	if models.ValidateUser(v, user); !v.Valid() {
+	if db.ValidateUser(v, user); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		return
 	}
@@ -99,7 +98,7 @@ func (uh *UserHandler) HandlerGetUser(w http.ResponseWriter, r *http.Request) {
 
 func (uh *UserHandler) HandlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.UpdateUser
+	var params db.UpdateUser
 
 	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)

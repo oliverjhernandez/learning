@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"casita/fixtures"
-
 	"github.com/gofiber/fiber/v2"
 )
 

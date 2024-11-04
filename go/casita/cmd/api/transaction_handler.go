@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"casita/internal/db"
-	"casita/internal/models"
 	"casita/internal/validator"
 
 	"github.com/go-chi/chi/v5"
@@ -25,20 +24,20 @@ func NewTransactionHandler(s *db.Store) *TransactionHandler {
 
 func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.CreateTransaction
+	var params db.CreateTransaction
 	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
 
-	txn, err := models.NewTransactionFromParams(&params)
+	txn, err := db.NewTransactionFromParams(&params)
 	if err != nil {
 		badRequestError(err)
 		return
 	}
 
 	v := validator.New()
-	if models.ValidateTransaction(v, txn); !v.Valid() {
+	if db.ValidateTransaction(v, txn); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		return
 	}
@@ -60,12 +59,12 @@ func (th *TransactionHandler) HandlerPostTransaction(w http.ResponseWriter, r *h
 
 func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	i := models.GetTransactions{}
+	i := db.GetTransactions{}
 	v := validator.New()
 
 	i.Concept = readString(r, "concept", "")
 	i.Description = readString(r, "description", "")
-	i.Relevance = models.Relevance(readInt(r, "relevance", 0, v))
+	i.Relevance = db.Relevance(readInt(r, "relevance", 0, v))
 	i.Value = int32(readInt(r, "value", -1, v))
 
 	i.Page = readInt(r, "page", 1, v)
@@ -73,7 +72,7 @@ func (th *TransactionHandler) HandlerGetTransactions(w http.ResponseWriter, r *h
 	i.Sort = readString(r, "sort", "value")
 	i.SortSafeList = []string{"value", "-value", "concept", "-concept", "relevance", "-relevance", "day", "-day", "month", "-month"}
 
-	if models.ValidateFilters(v, i.Filters); !v.Valid() {
+	if db.ValidateFilters(v, i.Filters); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		writeJSON(w, map[string]string{"error": "unprocessableEntityError"})
@@ -134,7 +133,7 @@ func (th *TransactionHandler) HandlerGetTransaction(w http.ResponseWriter, r *ht
 func (th *TransactionHandler) HandlerUpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 
-	var params models.UpdateTransaction
+	var params db.UpdateTransaction
 
 	strID := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(strID)

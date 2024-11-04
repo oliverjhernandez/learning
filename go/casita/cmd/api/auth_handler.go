@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"casita/internal/db"
-	"casita/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -28,8 +27,8 @@ type AuthParams struct {
 }
 
 type AuthResponse struct {
-	User  *models.User `json:"user"`
-	Token string       `json:"token"`
+	User  *db.User `json:"user"`
+	Token string   `json:"token"`
 }
 
 type genericResponse struct {
@@ -51,11 +50,6 @@ func (ah *AuthHandler) HandleAuthenticate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !models.IsValidPasswd(user.Passwd, params.Passwd) {
-		unauthorizedError(err)
-		return
-	}
-
 	// TODO: Should be better to send this in HTTP headers
 	resp := AuthResponse{
 		User:  user,
@@ -73,7 +67,7 @@ func (ah *AuthHandler) HandleAuthenticate(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func CreateTokenFromUser(user *models.User) string {
+func CreateTokenFromUser(user *db.User) string {
 	now := time.Now()
 	expires := now.Add(time.Hour * 4).Unix()
 	// TODO: Apparently there are standard claim names

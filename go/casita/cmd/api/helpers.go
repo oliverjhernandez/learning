@@ -9,18 +9,18 @@ import (
 	"strconv"
 	"strings"
 
-	"casita/internal/models"
+	"casita/internal/db"
 	"casita/internal/validator"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type Envelope struct {
-	Metadata *models.Metadata `json:"metadata,omitempty"`
-	Status   string           `json:"status"`
-	Message  string           `json:"message"`
-	Data     interface{}      `json:"data,omitempty"`
-	Error    interface{}      `json:"error,omitempty"`
+	Metadata *db.Metadata `json:"metadata,omitempty"`
+	Status   string       `json:"status"`
+	Message  string       `json:"message"`
+	Data     interface{}  `json:"data,omitempty"`
+	Error    interface{}  `json:"error,omitempty"`
 }
 
 func writeJSON(w http.ResponseWriter, data interface{}) error {

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"casita/internal/db"
-	"casita/internal/models"
 	"casita/internal/validator"
 
 	"github.com/go-chi/chi/v5"
@@ -22,24 +21,22 @@ func NewAccountHandler(s *db.Store) *AccountHandler {
 	}
 }
 
-var params *models.CreateAccount
-
 func (ah *AccountHandler) HandlerPostAccount(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var params models.CreateAccount
+	var params db.CreateAccount
 	if err := readJSON(r, &params); err != nil {
 		badRequestError(err)
 		return
 	}
 
-	acc, err := models.NewAccountFromParams(&params)
+	acc, err := db.NewAccountFromParams(&params)
 	if err != nil {
 		badRequestError(err)
 		return
 	}
 
 	v := validator.New()
-	if models.ValidateAccount(v, acc); !v.Valid() {
+	if db.ValidateAccount(v, acc); !v.Valid() {
 		unprocessableEntityError(errors.New("unprocessableEntityError"))
 		return
 	}
@@ -101,7 +98,7 @@ func (ah *AccountHandler) HandlerGetAccount(w http.ResponseWriter, r *http.Reque
 }
 
 func (ah *AccountHandler) HandlerUpdateAccount(w http.ResponseWriter, r *http.Request) {
-	var params models.UpdateAccount
+	var params db.UpdateAccount
 
 	c := r.Context()
 	strID := chi.URLParam(r, "id")
