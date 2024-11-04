@@ -6,30 +6,29 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"casita/internal/models"
 )
 
+// TODO: centralize this into a single interface
 type UserStore interface {
-	InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (*models.User, error)
-	GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*models.User, error)
-	GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*models.User, error)
-	GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.User, error)
-	UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) (*models.User, error)
+	InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*User, error)
+	GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*User, error)
+	GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*User, error)
+	GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*User, error)
+	UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *UpdateUser) (*User, error)
 	DeleteUserByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
 type PGUserStore struct {
-	client *sql.DB
+	DB *sql.DB
 }
 
 func NewPGUserStore(client *sql.DB) *PGUserStore {
 	return &PGUserStore{
-		client: client,
+		DB: client,
 	}
 }
 
-func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.User) (*models.User, error) {
+func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -37,32 +36,25 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.U
 
 	query := `
     INSERT into users 
-      (first_name, last_name, email, passwd, is_admin, created_at, updated_at)
+      (first_name, last_name, email, passwd_hash, created_at, updated_at)
     VALUES 
       ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id`
 
+	args := []interface{}{
+		user.FirstName,
+		user.LastName,
+		user.Email,
+		user.PasswdHash,
+		time.Now(),
+		time.Now(),
+	}
+
 	var err error
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, query,
-			user.FirstName,
-			user.LastName,
-			user.Email,
-			user.Passwd,
-			user.IsAdmin,
-			time.Now(),
-			time.Now(),
-		).Scan(&newID)
+		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	} else {
-		err = s.client.QueryRowContext(ctx, query,
-			user.FirstName,
-			user.LastName,
-			user.Email,
-			user.Passwd,
-			user.IsAdmin,
-			time.Now(),
-			time.Now(),
-		).Scan(&newID)
+		err = s.DB.QueryRowContext(ctx, query, args...).Scan(&newID)
 	}
 	if err != nil {
 		return nil, err
@@ -76,40 +68,32 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *models.U
 	return userResp, nil
 }
 
-func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*models.User, error) {
+func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var user models.User
+	var user User
 
 	query := `
-    SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
+    SELECT id, first_name, last_name, email, passwd_hash, created_at, updated_at
     FROM users
     WHERE id=$1`
 
+	args := []interface{}{
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.PasswdHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	}
+
 	var err error
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, query, id).Scan(
-			&user.ID,
-			&user.FirstName,
-			&user.LastName,
-			&user.Email,
-			&user.IsAdmin,
-			&user.Passwd,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
+		err = tx.QueryRowContext(ctx, query, id).Scan(args...)
 	} else {
-		err = s.client.QueryRowContext(ctx, query, id).Scan(
-			&user.ID,
-			&user.FirstName,
-			&user.LastName,
-			&user.Email,
-			&user.IsAdmin,
-			&user.Passwd,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
+		err = s.DB.QueryRowContext(ctx, query, id).Scan(args...)
 	}
 	if err != nil {
 		return &user, err
@@ -118,14 +102,14 @@ func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*mod
 	return &user, nil
 }
 
-func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*models.User, error) {
+func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var user models.User
+	var user User
 
 	query := `
-    SELECT id, first_name, last_name, email, is_admin, passwd, created_at, updated_at
+    SELECT id, first_name, last_name, email, passwd_hash, created_at, updated_at
     FROM users
     WHERE email=$1`
 
@@ -136,19 +120,17 @@ func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email stri
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
-			&user.IsAdmin,
-			&user.Passwd,
+			&user.PasswdHash,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
 	} else {
-		err = s.client.QueryRowContext(ctx, query, email).Scan(
+		err = s.DB.QueryRowContext(ctx, query, email).Scan(
 			&user.ID,
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
-			&user.IsAdmin,
-			&user.Passwd,
+			&user.PasswdHash,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -160,23 +142,22 @@ func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email stri
 	return &user, nil
 }
 
-func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.User, error) {
+func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var users []*models.User
+	var users []*User
 
 	query := `
-            SELECT id, first_name, last_name, email, is_admin, created_at, updated_at
-            from users
-    `
+    SELECT id, first_name, last_name, email, created_at, updated_at
+    FROM users`
 
 	var err error
 	var rows *sql.Rows
 	if tx != nil {
 		rows, err = tx.QueryContext(ctx, query)
 	} else {
-		rows, err = s.client.QueryContext(ctx, query)
+		rows, err = s.DB.QueryContext(ctx, query)
 	}
 	if err != nil {
 		return users, err
@@ -184,16 +165,17 @@ func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.Us
 	defer rows.Close()
 
 	for rows.Next() {
-		var user models.User
-		err = rows.Scan(
+		var user User
+
+		args := []interface{}{
 			&user.ID,
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
-			&user.IsAdmin,
 			&user.CreatedAt,
 			&user.UpdatedAt,
-		)
+		}
+		err = rows.Scan(args...)
 		if err != nil {
 			return users, err
 		}
@@ -204,7 +186,7 @@ func (s *PGUserStore) GetAllUsers(ctx context.Context, tx *sql.Tx) ([]*models.Us
 	return users, nil
 }
 
-func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateUser) (*models.User, error) {
+func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params *UpdateUser) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -230,11 +212,6 @@ func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params
 		args = append(args, params.Email)
 		argID++
 	}
-	if *params.IsAdmin {
-		setClauses = append(setClauses, fmt.Sprintf("is_admin = $%d", argID))
-		args = append(args, params.IsAdmin)
-		argID++
-	}
 
 	setClauses = append(setClauses, fmt.Sprintf("updated_at = $%d", argID))
 	args = append(args, now)
@@ -243,16 +220,16 @@ func (s *PGUserStore) UpdateUser(ctx context.Context, tx *sql.Tx, id int, params
 	args = append(args, id)
 
 	query := fmt.Sprintf(`
-        UPDATE users 
-        SET %s
-        WHERE id = $%d
-    `, strings.Join(setClauses, ", "), argID)
+    UPDATE users 
+    SET %s
+    WHERE id = $%d`,
+		strings.Join(setClauses, ", "), argID)
 
 	var err error
 	if tx != nil {
 		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	} else {
-		err = s.client.QueryRowContext(ctx, query, args...).Scan(&newID)
+		err = s.DB.QueryRowContext(ctx, query, args...).Scan(&newID)
 	}
 	if err != nil {
 		return nil, err
@@ -270,13 +247,16 @@ func (s *PGUserStore) DeleteUserByID(ctx context.Context, tx *sql.Tx, id int) er
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	query := `DELETE FROM users WHERE id = $1`
+	query := `
+    DELETE 
+    FROM users 
+    WHERE id = $1`
 
 	var err error
 	if tx != nil {
 		_, err = tx.ExecContext(ctx, query, id)
 	} else {
-		_, err = s.client.ExecContext(ctx, query, id)
+		_, err = s.DB.ExecContext(ctx, query, id)
 	}
 	if err != nil {
 		return err

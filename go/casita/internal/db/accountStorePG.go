@@ -4,17 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"time"
-
-	"casita/internal/models"
 )
 
 // TODO: Improve the errors passed to the layer above
 
 type AccountStore interface {
-	InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (*models.Account, error)
-	GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*models.Account, error)
-	GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*models.Account, error)
-	UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) (*models.Account, error)
+	InsertAccount(ctx context.Context, tx *sql.Tx, account *Account) (*Account, error)
+	GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*Account, error)
+	GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*Account, error)
+	UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *UpdateAccount) (*Account, error)
 	DeleteAccountByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -28,7 +26,7 @@ func NewPGAccountStore(client *sql.DB) *PGAccountStore {
 	}
 }
 
-func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account *models.Account) (*models.Account, error) {
+func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account *Account) (*Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -73,11 +71,11 @@ func (s *PGAccountStore) InsertAccount(ctx context.Context, tx *sql.Tx, account 
 	return acc, nil
 }
 
-func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*models.Account, error) {
+func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int) (*Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var acc models.Account
+	var acc Account
 
 	query := `
     SELECT id, name, user_id, entity, currency, created_at, updated_at
@@ -113,11 +111,11 @@ func (s *PGAccountStore) GetAccountByID(ctx context.Context, tx *sql.Tx, id int)
 	return &acc, nil
 }
 
-func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*models.Account, error) {
+func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var accounts []*models.Account
+	var accounts []*Account
 
 	query := `
             SELECT 
@@ -137,7 +135,7 @@ func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*mod
 	defer rows.Close()
 
 	for rows.Next() {
-		var account models.Account
+		var account Account
 		err = rows.Scan(
 			&account.ID,
 			&account.Name,
@@ -157,7 +155,7 @@ func (s *PGAccountStore) GetAllAccounts(ctx context.Context, tx *sql.Tx) ([]*mod
 	return accounts, nil
 }
 
-func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateAccount) (*models.Account, error) {
+func (s *PGAccountStore) UpdateAccount(ctx context.Context, tx *sql.Tx, id int, params *UpdateAccount) (*Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 

@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"casita/internal/models"
 )
 
 type TransactionStore interface {
-	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error)
-	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error)
-	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, models.Metadata, error)
-	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error)
+	InsertTransaction(ctx context.Context, tx *sql.Tx, txn *Transaction) (*Transaction, error)
+	GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*Transaction, error)
+	GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f Filters) ([]*Transaction, Metadata, error)
+	UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *UpdateTransaction) (*Transaction, error)
 	DeleteTransactionByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -28,7 +26,7 @@ func NewPGTransactionStore(client *sql.DB) *PGTransactionStore {
 	}
 }
 
-func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, txn *models.Transaction) (*models.Transaction, error) {
+func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, txn *Transaction) (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -77,11 +75,11 @@ func (s *PGTransactionStore) InsertTransaction(ctx context.Context, tx *sql.Tx, 
 	return tran, nil
 }
 
-func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*models.Transaction, error) {
+func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx, id int) (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var txn models.Transaction
+	var txn Transaction
 
 	query := `
     SELECT 
@@ -122,12 +120,12 @@ func (s *PGTransactionStore) GetTransactionByID(ctx context.Context, tx *sql.Tx,
 	return &txn, nil
 }
 
-func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f models.Filters) ([]*models.Transaction, models.Metadata, error) {
+func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx, concept string, value int32, description string, f Filters) ([]*Transaction, Metadata, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
 	totalRecords := 0
-	var txns []*models.Transaction
+	var txns []*Transaction
 
 	query := fmt.Sprintf(`
     SELECT count(*) OVER(), id, concept, description, value, date, relevance, account_id, created_at, updated_at
@@ -149,12 +147,12 @@ func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx,
 		rows, err = s.client.QueryContext(ctx, query, args...)
 	}
 	if err != nil {
-		return txns, models.Metadata{}, err
+		return txns, Metadata{}, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var txn models.Transaction
+		var txn Transaction
 		err = rows.Scan(
 			&totalRecords,
 			&txn.ID,
@@ -168,18 +166,18 @@ func (s *PGTransactionStore) GetAllTransactions(ctx context.Context, tx *sql.Tx,
 			&txn.UpdatedAt,
 		)
 		if err != nil {
-			return nil, models.Metadata{}, err
+			return nil, Metadata{}, err
 		}
 
 		txns = append(txns, &txn)
 	}
 
-	metadata := models.CalculateMetadata(totalRecords, f.Page, f.PageSize)
+	metadata := CalculateMetadata(totalRecords, f.Page, f.PageSize)
 
 	return txns, metadata, nil
 }
 
-func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateTransaction) (*models.Transaction, error) {
+func (s *PGTransactionStore) UpdateTransaction(ctx context.Context, tx *sql.Tx, id int, params *UpdateTransaction) (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 

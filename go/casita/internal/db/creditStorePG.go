@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"casita/internal/models"
 )
 
 type CreditStore interface {
-	InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (*models.Credit, error)
-	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*models.Credit, error)
-	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*models.Credit, error)
-	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) (*models.Credit, error)
+	InsertCredit(ctx context.Context, tx *sql.Tx, credit *Credit) (*Credit, error)
+	GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*Credit, error)
+	GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*Credit, error)
+	UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *UpdateCredit) (*Credit, error)
 	DeleteCreditByID(ctx context.Context, tx *sql.Tx, id int) error
 }
 
@@ -28,7 +26,7 @@ func NewPGCreditStore(client *sql.DB) *PGCreditStore {
 	}
 }
 
-func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *models.Credit) (*models.Credit, error) {
+func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *Credit) (*Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -84,11 +82,11 @@ func (s *PGCreditStore) InsertCredit(ctx context.Context, tx *sql.Tx, credit *mo
 	return cred, nil
 }
 
-func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*models.Credit, error) {
+func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (*Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var credit models.Credit
+	var credit Credit
 
 	query := `
             SELECT 
@@ -134,11 +132,11 @@ func (s *PGCreditStore) GetCreditByID(ctx context.Context, tx *sql.Tx, id int) (
 	return &credit, nil
 }
 
-func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*models.Credit, error) {
+func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var credits []*models.Credit
+	var credits []*Credit
 
 	query := `
             SELECT 
@@ -158,7 +156,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*model
 	defer rows.Close()
 
 	for rows.Next() {
-		var credit models.Credit
+		var credit Credit
 		err := rows.Scan(
 			&credit.ID,
 			&credit.ClosingDay,
@@ -182,7 +180,7 @@ func (s *PGCreditStore) GetAllCredits(ctx context.Context, tx *sql.Tx) ([]*model
 	return credits, nil
 }
 
-func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *models.UpdateCredit) (*models.Credit, error) {
+func (s *PGCreditStore) UpdateCredit(ctx context.Context, tx *sql.Tx, id int, params *UpdateCredit) (*Credit, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
