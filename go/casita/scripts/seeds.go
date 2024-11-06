@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"casita/internal/db"
-	"casita/internal/models"
 )
 
 var (
@@ -34,16 +33,14 @@ func tearDown(db *sql.DB) error {
 }
 
 func seed() {
-	newUserIsAdmin := true
-	params := models.CreateUser{
+	params := db.CreateUser{
 		FirstName: "Corina",
 		LastName:  "Pulido",
 		Email:     "corina@gmail.com",
-		IsAdmin:   &newUserIsAdmin,
 		Passwd:    "test123",
 	}
 
-	userParams, err := models.NewUserFromParams(&params)
+	userParams, err := db.NewUserFromParams(&params)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,10 +51,10 @@ func seed() {
 		os.Exit(1)
 	}
 
-	accountParams := models.Account{
+	accountParams := db.Account{
 		Name:     "Main",
-		Entity:   models.BANCOLOMBIA,
-		Currency: models.COP,
+		Entity:   db.BANCOLOMBIA,
+		Currency: db.COP,
 		UserID:   user.ID,
 	}
 
@@ -67,13 +64,13 @@ func seed() {
 		os.Exit(1)
 	}
 
-	transactions := []*models.Transaction{
+	transactions := []*db.Transaction{
 		{
 			Concept:     "Supermercado",
 			Description: "Desayuno de la semana",
 			Value:       320000,
 			Date:        time.Now().Add(-7 * 24 * time.Hour),
-			Relevance:   models.Essential,
+			Relevance:   db.Essential,
 			AccountID:   account.ID,
 		},
 		{
@@ -81,7 +78,7 @@ func seed() {
 			Description: "Natación",
 			Value:       20000,
 			Date:        time.Now().Add(-5 * 24 * time.Hour),
-			Relevance:   models.Optional,
+			Relevance:   db.Optional,
 			AccountID:   account.ID,
 		},
 		{
@@ -89,7 +86,7 @@ func seed() {
 			Description: "Mensual",
 			Value:       100000,
 			Date:        time.Now().Add(-3 * 24 * time.Hour),
-			Relevance:   models.Important,
+			Relevance:   db.Important,
 			AccountID:   account.ID,
 		},
 		{
@@ -97,7 +94,7 @@ func seed() {
 			Description: "Playa",
 			Value:       5000,
 			Date:        time.Now().Add(-9 * 24 * time.Hour),
-			Relevance:   models.Optional,
+			Relevance:   db.Optional,
 			AccountID:   account.ID,
 		},
 	}
@@ -110,13 +107,13 @@ func seed() {
 		}
 	}
 
-	credits := []*models.Credit{
+	credits := []*db.Credit{
 		{
 			ClosingDay:   19,
 			DueDay:       27,
 			Identifier:   "q3hf489657439-42f89h5",
-			Entity:       models.BANCOLOMBIA,
-			Type:         models.HIPOTECARIO,
+			Entity:       db.BANCOLOMBIA,
+			Type:         db.HIPOTECARIO,
 			Rate:         2.14,
 			Total:        80000000,
 			UserID:       user.ID,
@@ -126,8 +123,8 @@ func seed() {
 			ClosingDay:   16,
 			DueDay:       25,
 			Identifier:   "uofhehuiwrhurwfghvrw-34678",
-			Entity:       models.AV_VILLAS,
-			Type:         models.LIBRE,
+			Entity:       db.AV_VILLAS,
+			Type:         db.LIBRE,
 			Rate:         1.8,
 			Total:        10000000,
 			UserID:       user.ID,
