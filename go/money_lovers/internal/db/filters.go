@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	"casita/internal/validator"
+	"money_lovers/internal/validator"
 )
 
 type Filters struct {

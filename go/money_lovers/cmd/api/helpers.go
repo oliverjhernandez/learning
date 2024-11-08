@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"casita/internal/db"
-	"casita/internal/validator"
+	"money_lovers/internal/db"
+	"money_lovers/internal/validator"
 
 	"github.com/go-chi/chi/v5"
 )

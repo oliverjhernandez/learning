@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"casita/internal/validator"
+	"money_lovers/internal/validator"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,7 +20,7 @@ type User struct {
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	Email     string    `json:"email"`
-	Passwd    password  `json:"-"`
+	Passwd    Password  `json:"-"`
 	Version   string    `json:"-"`
 	Activated bool      `json:"-"`
 }
@@ -29,7 +29,7 @@ type CreateUser struct {
 	FirstName string   `json:"first_name"`
 	LastName  string   `json:"last_name"`
 	Email     string   `json:"email"`
-	Passwd    password `json:"passwd"`
+	Passwd    Password `json:"passwd"`
 }
 
 type UpdateUser struct {
@@ -38,24 +38,24 @@ type UpdateUser struct {
 	Email     string `json:"email"`
 }
 
-type password struct {
-	plaintext *string
+type Password struct {
+	Plaintext *string
 	hash      []byte
 }
 
-func (p *password) Set(plaintext string) error {
+func (p *Password) Set(plaintext string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plaintext), 12)
 	if err != nil {
 		return err
 	}
 
-	p.plaintext = &plaintext
+	p.Plaintext = &plaintext
 	p.hash = hash
 
 	return nil
 }
 
-func (p *password) Matches(plaintext string) (bool, error) {
+func (p *Password) Matches(plaintext string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintext))
 	if err != nil {
 		switch {
@@ -90,10 +90,7 @@ func NewUserFromParams(u *CreateUser) (*User, error) {
 		return nil, err
 	}
 
-	passwd := &password{
-		plaintext: u.Passwd.plaintext,
-		hash:      encpw,
-	}
+	u.Passwd.hash = encpw
 
 	return &User{
 		CreatedAt: now,
@@ -101,7 +98,8 @@ func NewUserFromParams(u *CreateUser) (*User, error) {
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,
-		Passwd:    *passwd,
+		Passwd:    u.Passwd,
+		Activated: true,
 	}, nil
 }
 
@@ -117,8 +115,8 @@ func ValidateUser(v *validator.Validator, u *User) {
 	// Validate email
 	ValidateEmail(v, u.Email)
 
-	if u.Passwd.plaintext != nil {
-		ValidatePasswordPlaintext(v, *u.Passwd.plaintext)
+	if u.Passwd.Plaintext != nil {
+		ValidatePasswordPlaintext(v, *u.Passwd.Plaintext)
 	}
 
 	if u.Passwd.hash != nil {

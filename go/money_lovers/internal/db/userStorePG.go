@@ -36,7 +36,7 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*
 
 	query := `
     INSERT into users 
-      (first_name, last_name, email, passwd_hash, created_at, updated_at)
+      (first_name, last_name, email, passwd_hash, activated, created_at, updated_at)
     VALUES 
       ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id`
@@ -45,7 +45,8 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*
 		user.FirstName,
 		user.LastName,
 		user.Email,
-		user.PasswdHash,
+		user.Passwd.hash,
+		user.Activated,
 		time.Now(),
 		time.Now(),
 	}
@@ -84,7 +85,7 @@ func (s *PGUserStore) GetUserByID(ctx context.Context, tx *sql.Tx, id int) (*Use
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
-		&user.PasswdHash,
+		&user.Passwd.hash,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	}
@@ -120,7 +121,7 @@ func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email stri
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
-			&user.PasswdHash,
+			&user.Passwd.hash,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -130,7 +131,7 @@ func (s *PGUserStore) GetUserByEmail(ctx context.Context, tx *sql.Tx, email stri
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
-			&user.PasswdHash,
+			&user.Passwd.hash,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)

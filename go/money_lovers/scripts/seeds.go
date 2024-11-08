@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"casita/internal/db"
+	"money_lovers/internal/db"
 )
 
 var (
@@ -33,11 +33,13 @@ func tearDown(db *sql.DB) error {
 }
 
 func seed() {
+	passwd := "test123"
+
 	params := db.CreateUser{
 		FirstName: "Corina",
 		LastName:  "Pulido",
 		Email:     "corina@gmail.com",
-		Passwd:    "test123",
+		Passwd:    db.Password{Plaintext: &passwd},
 	}
 
 	userParams, err := db.NewUserFromParams(&params)
@@ -145,7 +147,7 @@ func main() {
 	dbParams := db.DBParams{
 		Host:   "localhost",
 		Port:   "5432",
-		Name:   "casita",
+		Name:   "money_lovers",
 		User:   "postgres",
 		Passwd: "secret",
 		SSL:    "disable",

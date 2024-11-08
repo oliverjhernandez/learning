@@ -1,4 +1,4 @@
-module casita
+module money_lovers
 
 go 1.22.3
 

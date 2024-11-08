@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"casita/internal/db"
+	"money_lovers/internal/db"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog/v2"

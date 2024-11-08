@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"casita/cmd/api"
-	"casita/internal/db"
+	"money_lovers/cmd/api"
+	"money_lovers/internal/db"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,7 +41,7 @@ func main() {
 		DB: db.DBParams{
 			Host:   "localhost",
 			Port:   "5432",
-			Name:   "casita",
+			Name:   "money_lovers",
 			User:   "postgres",
 			Passwd: "secret",
 			SSL:    "disable",

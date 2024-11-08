@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"casita/internal/validator"
+	"money_lovers/internal/validator"
 )
 
 type Currency int
