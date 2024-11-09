@@ -3,11 +3,15 @@
 
 GET http://{{hostname}}:{{port}}/v1/transactions
 
-### 
+###
 
 GET http://{{hostname}}:{{port}}/panic
 
-### 
+###
+
+GET http://{{hostname}}:{{port}}/ping
+
+###
 
 GET http://{{hostname}}:{{port}}/v1/transactions/3
 
@@ -42,3 +46,16 @@ GET http://{{hostname}}:{{port}}/v1/transactions?page=0&page_size=0&sort=hello
 ###
 
 GET http://{{hostname}}:{{port}}/v1/users
+
+###
+
+POST http://{{hostname}}:{{port}}/v1/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "first_name": "Oliver",
+  "last_name": "Hernandez",
+  "email": "oliverjhernandez@gmail.com",
+  "passwd": "oliver123"
+}
