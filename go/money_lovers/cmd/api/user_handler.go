@@ -9,15 +9,18 @@ import (
 	"money_lovers/internal/validator"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httplog/v2"
 )
 
 type UserHandler struct {
-	Store db.UserStore
+	Store  db.UserStore
+	Logger *httplog.Logger
 }
 
-func NewUserHandler(s *db.Store) *UserHandler {
+func NewUserHandler(s *db.Store, logger *httplog.Logger) *UserHandler {
 	return &UserHandler{
-		Store: s.UserStore,
+		Store:  s.UserStore,
+		Logger: logger,
 	}
 }
 
@@ -25,31 +28,36 @@ func (uh *UserHandler) HandlerPostUser(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var params db.CreateUser
 	if err := readJSON(r, &params); err != nil {
-		badRequestError(err)
+		se := badRequestError(err)
+		writeErrorResponse(w, se)
 		return
 	}
 
 	user, err := db.NewUserFromParams(&params)
 	if err != nil {
-		badRequestError(err)
+		se := badRequestError(err)
+		writeErrorResponse(w, se)
 		return
 	}
 
 	v := validator.New()
 	if db.ValidateUser(v, user); !v.Valid() {
-		unprocessableEntityError(errors.New("unprocessableEntityError"))
+		se := unprocessableEntityError(errors.New("unprocessableEntityError"))
+		writeErrorResponse(w, se)
 		return
 	}
 
 	userResp, err := uh.Store.InsertUser(c, nil, user)
 	if err != nil {
-		notFoundError(err)
+		se := conflictError(err)
+		writeErrorResponse(w, se)
 		return
 	}
 
 	err = writeJSON(w, userResp)
 	if err != nil {
-		internalServerError(err)
+		se := internalServerError(err)
+		writeErrorResponse(w, se)
 		return
 	}
 

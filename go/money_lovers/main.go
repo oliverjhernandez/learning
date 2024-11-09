@@ -27,10 +27,7 @@ func main() {
 			"version": "v1",
 			"env":     "dev",
 		},
-		QuietDownRoutes: []string{
-			"/",
-			"/healthz",
-		},
+		QuietDownRoutes: []string{},
 		QuietDownPeriod: 10 * time.Second,
 		SourceFieldName: "source",
 	})
@@ -49,13 +46,14 @@ func main() {
 	}
 
 	chi := chi.NewRouter()
-	chi.Use(middleware.Timeout(60 * time.Second))
 	chi.Use(httplog.RequestLogger(logger))
+	chi.Use(middleware.Timeout(60 * time.Second))
 	chi.Use(middleware.Recoverer)
 	chi.Use(middleware.URLFormat)
 	chi.Use(render.SetContentType(render.ContentTypeJSON))
 
 	api.InitializeRoutes(chi, cfg, logger)
+	logger.Info("Routes initialized")
 
 	logger.Log(context.TODO(), 0, "starting server")
 

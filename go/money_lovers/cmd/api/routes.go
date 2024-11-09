@@ -17,11 +17,11 @@ func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
 	}
 
 	logger.Log(context.TODO(), 0, "database connection pool stablished")
-	defer func() {
-		if err := client.Close(); err != nil {
-			logger.Log(context.TODO(), 8, "error closing connection to db: "+err.Error())
-		}
-	}()
+	// defer func() {
+	// if err := client.Close(); err != nil {
+	//   logger.Log(context.TODO(), 8, "error closing connection to db: "+err.Error())
+	// }
+	// }()
 
 	stores := &db.Store{
 		DB:           client,
@@ -33,7 +33,7 @@ func InitializeRoutes(app *chi.Mux, dbCfg db.DBCfg, logger *httplog.Logger) {
 
 	var (
 		txHandler      = NewTransactionHandler(stores)
-		userHandler    = NewUserHandler(stores)
+		userHandler    = NewUserHandler(stores, logger)
 		creditHandler  = NewCreditHandler(stores)
 		accountHandler = NewAccountHandler(stores)
 		authHandler    = NewAuthHandler(stores)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -20,6 +21,15 @@ func (se StatusError) StatusCode() int {
 	return se.Code
 }
 
+func writeErrorResponse(w http.ResponseWriter, se StatusError) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(se.Code)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"error":   se.Err.Error(),
+		"details": se.Caller,
+	})
+}
+
 func NewError(err error, code int) StatusError {
 	pc, _, line, _ := runtime.Caller(2)
 	details := runtime.FuncForPC(pc)
@@ -37,6 +47,10 @@ func internalServerError(err error) StatusError {
 
 func notFoundError(err error) StatusError {
 	return NewError(err, http.StatusNotFound)
+}
+
+func conflictError(err error) StatusError {
+	return NewError(err, http.StatusConflict)
 }
 
 func methodNotAllowedError(err error) StatusError {
