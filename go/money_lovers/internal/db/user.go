@@ -26,10 +26,10 @@ type User struct {
 }
 
 type CreateUser struct {
-	FirstName string   `json:"first_name"`
-	LastName  string   `json:"last_name"`
-	Email     string   `json:"email"`
-	Passwd    Password `json:"passwd"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Passwd    string `json:"passwd"`
 }
 
 type UpdateUser struct {
@@ -85,12 +85,14 @@ func ValidatePasswordPlaintext(v *validator.Validator, plaintext string) {
 
 func NewUserFromParams(u *CreateUser) (*User, error) {
 	now := time.Now()
-	encpw, err := bcrypt.GenerateFromPassword([]byte(u.Passwd.hash), bcryptCost)
+	encpw, err := bcrypt.GenerateFromPassword([]byte(u.Passwd), bcryptCost)
 	if err != nil {
 		return nil, err
 	}
 
-	u.Passwd.hash = encpw
+	passwd := &Password{
+		hash: encpw,
+	}
 
 	return &User{
 		CreatedAt: now,
@@ -98,7 +100,7 @@ func NewUserFromParams(u *CreateUser) (*User, error) {
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,
-		Passwd:    u.Passwd,
+		Passwd:    *passwd,
 		Activated: true,
 	}, nil
 }
@@ -115,11 +117,7 @@ func ValidateUser(v *validator.Validator, u *User) {
 	// Validate email
 	ValidateEmail(v, u.Email)
 
-	if u.Passwd.Plaintext != nil {
-		ValidatePasswordPlaintext(v, *u.Passwd.Plaintext)
-	}
-
-	if u.Passwd.hash != nil {
+	if u.Passwd.hash == nil {
 		panic("missing password hash for user")
 	}
 }

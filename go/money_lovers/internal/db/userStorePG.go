@@ -32,8 +32,6 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	var newID int
-
 	query := `
     INSERT into users 
       (first_name, last_name, email, passwd_hash, activated, created_at, updated_at)
@@ -51,6 +49,7 @@ func (s *PGUserStore) InsertUser(ctx context.Context, tx *sql.Tx, user *User) (*
 		time.Now(),
 	}
 
+	var newID int
 	var err error
 	if tx != nil {
 		err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
