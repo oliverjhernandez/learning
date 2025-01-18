@@ -13,7 +13,6 @@ const NewAccountModal: React.FC<NewAccountModalProps> = ({
   if (!isOpen) {
     return null
   }
-  console.log('Help!!')
 
   return (
     <div className='bg-seconday border border-alpha-black-25 rounded-2xl max-w-[580px] w-min-content shadow-xs h-fit '>

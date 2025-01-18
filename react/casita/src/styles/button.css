@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .btn {
-  @apply bg-seconday border-0 h-12 rounded-lg w-auto shadow-gray-50 max-w-xs;
+  @apply bg-primary border-0 h-12 rounded-lg w-auto shadow-gray-50 max-w-xs;
 }
 
 .btn-item {

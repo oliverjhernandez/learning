@@ -12,8 +12,17 @@ export default {
       body: ['"Open Sans"'],
     },
     backgroundColor: {
-      primary: '#ededed',
-      seconday: '#FFFFFF',
+      primary: '#FCFBFC',
+      secondary: '#FFFFFF',
+      blue: '#4169E1',
+      labelgreen: '#E9FFE5',
+    },
+    borderColor: {
+      labelgreen: '#92C585',
+      card: '#D1D5DB',
+    },
+    textColor: {
+      logo: '#F87171',
     },
   },
   plugins: [],

@@ -3,5 +3,5 @@
 @tailwind utilities;
 
 .header-container {
-  @apply flex flex-row justify-between w-auto mb-3 font-lvl1 font-bold text-4xl;
+  @apply flex flex-row justify-between w-auto mb-3 font-lvl1 font-bold text-3xl;
 }

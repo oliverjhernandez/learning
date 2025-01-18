@@ -2,10 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-primary h-screen;
+.main {
+  @apply grid grid-cols-[1fr_5fr];
 }
 
-.main {
-  @apply grid grid-cols-[1fr_3fr] gap-4;
+.body {
+  @apply grid grid-rows-[1fr_15fr];
+}
+
+.body-header {
+  @apply grid grid-cols-[50%_1fr_auto_auto] px-4 bg-blend-color-dodge  items-center justify-center;
+}
+
+.body-header-title {
+  @apply text-logo p-4 text-3xl font-lvl1;
+}
+
+.notification-icon {
+  @apply p-4;
+}
+
+.dashboard {
+  @apply grid grid-cols-2  grid-rows-[1fr_3fr];
+}
+
+.dashboard-container-2x2 {
+  @apply grid grid-cols-2 grid-rows-2 p-4;
+}
+
+.dashboard-container-2x1 {
+  @apply grid grid-cols-2 grid-rows-1 p-4;
+}
+
+.dashboard-container-1x1 {
+  @apply grid grid-cols-1 grid-rows-1 p-4;
+}
+
+.dashboard-container-1x2 {
+  @apply grid grid-cols-1 grid-rows-2 p-4;
+}
+
+.dashboard-single-card {
+  @apply bg-primary m-4 p-4 border-2 border-card rounded-lg grid grid-rows-2;
+}
+
+.dashboard-single-card-title {
+  @apply flex gap-4;
+}
+
+.dashboard-single-card-content {
+  @apply flex gap-4 bg-primary border-card h-auto items-center;
+}
+
+.card-amount {
+  @apply font-lvl2 text-lg font-bold;
+}
+
+.card-label {
+  @apply bg-labelgreen border-2 border-labelgreen rounded-lg text-xs;
 }
