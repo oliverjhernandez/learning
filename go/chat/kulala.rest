@@ -1,0 +1,18 @@
+@hostname=localhost
+@port=8080
+
+
+GET http://{{hostname}}:{{port}}/messages
+
+### 
+
+GET http://{{hostname}}:{{port}}/channels
+
+###
+
+POST http://{{hostname}}:{{port}}/users
+Content-Type: application/json
+{
+  "username": "oliver",
+  "passwd": "123456"
+}
