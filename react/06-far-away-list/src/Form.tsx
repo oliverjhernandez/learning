@@ -1,11 +1,31 @@
 import { useState } from "react";
+import { itemProp } from "./PackingList";
 
-const Form = () => {
+type FormProps = {
+  onAddItems: (i: itemProp) => void;
+};
+
+const Form = (props: FormProps) => {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!description) return;
+
+    const newItem: itemProp = {
+      id: Date.now(),
+      description: description,
+      quantity: quantity,
+      packed: false,
+    };
+    console.log(newItem);
+
+    props.onAddItems(newItem);
+
+    setDescription("");
+    setQuantity(1);
   };
 
   return (
@@ -26,8 +46,6 @@ const Form = () => {
         placeholder="item..."
         value={description}
         onChange={(e) => {
-          console.log(e.target);
-
           setDescription(e.target.value);
         }}
       />
