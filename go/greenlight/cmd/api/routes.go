@@ -6,18 +6,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (a *application) routes() http.Handler {
+func (app *application) routes() *httprouter.Router {
 	router := httprouter.New()
 
-	router.NotFound = http.HandlerFunc(a.notFoundError)
-	router.MethodNotAllowed = http.HandlerFunc(a.methodNotAllowedError)
+	router.NotFound = http.HandlerFunc(app.notFoundResponse)
+	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
-	router.HandlerFunc(http.MethodGet, "/v1/health", a.healthHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/movies", a.createMovieHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", a.getMovieHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/movies", a.listMovieHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", a.updateMovieHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", a.deleteMovieHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/movies", app.createMovieHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.showMovieHandler)
 
-	return a.recoverPanic(a.rateLimit(router))
+	return router
 }

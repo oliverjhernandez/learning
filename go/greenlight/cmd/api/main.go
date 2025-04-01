@@ -1,101 +1,52 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"flag"
+	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"time"
-
-	"greenlight/internal/data"
-	"greenlight/internal/jsonlog"
-
-	_ "github.com/lib/pq"
 )
 
+const version = "1.0.0"
+
 type config struct {
-	env  string
 	port int
-	db   struct {
-		dsn          string
-		maxOpenConns int
-		maxIdleConns int
-		maxIdleTime  string
-	}
-	limiter struct {
-		rps     float64
-		burst   int
-		enabled bool
-	}
+	env  string
 }
 
 type application struct {
-	logger *jsonlog.Logger
 	config config
-	models data.Models
+	logger *log.Logger
 }
 
 func main() {
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.env, "env", "dev", "Environment (dev|stag|prod)")
-
-	cfg.db.dsn = "user=postgres password=secret host=localhost dbname=greenlight sslmode=disable"
-	cfg.db.maxOpenConns = 25
-	cfg.db.maxIdleConns = 25
-	cfg.db.maxIdleTime = "15m"
-
-	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
-	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
-	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
-
+	flag.IntVar(&cfg.port, "port", 4000, "API Server Port")
+	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production")
 	flag.Parse()
 
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
-
-	db, err := openDB(cfg)
-	if err != nil {
-		logger.PrintFatal(err.Error(), nil)
-	}
-
-	defer db.Close()
-	logger.PrintInfo("database connection established", nil)
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	app := &application{
 		config: cfg,
 		logger: logger,
-		models: data.NewModels(db),
 	}
 
-	if err := app.serve(); err != nil {
-		logger.PrintFatal(err.Error(), nil)
-	}
-}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
 
-func openDB(c config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", c.db.dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetMaxOpenConns(c.db.maxOpenConns)
-	db.SetMaxIdleConns(c.db.maxIdleConns)
-
-	duration, err := time.ParseDuration(c.db.maxIdleTime)
-	if err != nil {
-		return nil, err
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      app.routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
-	db.SetConnMaxIdleTime(duration)
-
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
-	defer cancel()
-
-	err = db.PingContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	logger.Printf("starting %s server on %s", cfg.env, srv.Addr)
+	err := srv.ListenAndServe()
+	logger.Fatal(err)
 }

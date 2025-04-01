@@ -1,16 +1,14 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
+	"time"
 
 	"greenlight/internal/data"
-	"greenlight/internal/validator"
 )
 
-func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title   string       `json:"title"`
 		Year    int32        `json:"year"`
@@ -18,198 +16,32 @@ func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request)
 		Genres  []string     `json:"genres"`
 	}
 
-	err := a.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
-		a.badRequestError(w, r)
-		return
+		app.badRequestResponse(w, r, err)
 	}
 
-	movie := &data.Movie{
-		Title:   input.Title,
-		Year:    input.Year,
-		Runtime: input.Runtime,
-		Genres:  input.Genres,
-	}
-
-	v := validator.New()
-	if data.ValidateMovie(v, movie); !v.Valid() {
-		a.failedValidationResponse(w, r, v.Errors)
-		return
-	}
-
-	if err := a.models.Movies.Insert(movie); err != nil {
-		// TODO: improve error here
-		a.internalServerError(w, r)
-		panic(err)
-	}
-
-	headers := make(http.Header)
-	headers.Set("Locations", fmt.Sprintf("/v1/movies/%d", movie.ID))
-
-	err = a.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, headers)
-	if err != nil {
-		a.internalServerError(w, r)
-	}
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
-func (a *application) getMovieHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := a.readIDFromParams(r)
-	if err != nil {
-		a.notFoundError(w, r)
+func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil || id < 1 {
+		app.notFoundResponse(w, r)
 		return
 	}
 
-	movie, err := a.models.Movies.Get(int(id))
+	movie := data.Movie{
+		ID:        id,
+		CreatedAt: time.Now(),
+		Title:     "Casablanca",
+		Runtime:   102,
+		Genres:    []string{"drama", "romance", "war"},
+		Version:   1,
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			a.notFoundError(w, r)
-		default:
-			a.internalServerError(w, r)
-		}
-		return
-
-	}
-
-	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
-	if err != nil {
-		a.internalServerError(w, r)
-	}
-}
-
-func (a *application) listMovieHandler(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		Title  string
-		Genres []string
-		data.Filters
-	}
-
-	v := validator.New()
-
-	qs := r.URL.Query()
-
-	input.Title = a.readString(qs, "title", "")
-	input.Genres = a.readCSV(qs, "genres", []string{})
-	input.Page = a.readInt(qs, "page", 1, v)
-	input.PageSize = a.readInt(qs, "page_size", 10, v)
-
-	input.SortSafeList = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
-	input.Sort = a.readString(qs, "sort", "id")
-
-	if data.ValidateFilters(v, input.Filters); !v.Valid() {
-		a.failedValidationResponse(w, r, v.Errors)
-		return
-	}
-
-	movies, md, err := a.models.Movies.GetAll(input.Title, input.Genres, input.Filters)
-	if err != nil {
-		a.errorResponse(w, r, http.StatusNotFound, err.Error())
-		return
-	}
-
-	err = a.writeJSON(w, http.StatusOK, envelope{"metadata": md, "movies": movies}, nil)
-	if err != nil {
-		a.errorResponse(w, r, http.StatusInternalServerError, err)
-	}
-}
-
-func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := a.readIDFromParams(r)
-	if err != nil {
-		a.notFoundError(w, r)
-		return
-	}
-
-	movie, err := a.models.Movies.Get(int(id))
-	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			a.notFoundError(w, r)
-		default:
-			a.errorResponse(w, r, http.StatusInternalServerError, err)
-		}
-		return
-	}
-
-	if r.Header.Get("X-Expected-Version") != "" {
-		if strconv.FormatInt(int64(movie.Version), 32) != r.Header.Get("X-Expected-Version") {
-			a.editConflictResponse(w, r)
-			return
-		}
-	}
-
-	var input struct {
-		Title   *string       `json:"title"`
-		Year    *int32        `json:"year"`
-		Runtime *data.Runtime `json:"runtime"`
-		Genres  []string      `json:"genres"`
-	}
-
-	err = a.readJSON(w, r, &input)
-	if err != nil {
-		a.badRequestError(w, r)
-		return
-	}
-
-	if input.Title != nil {
-		movie.Title = *input.Title
-	}
-
-	if input.Year != nil {
-		movie.Year = *input.Year
-	}
-
-	if input.Runtime != nil {
-		movie.Runtime = *input.Runtime
-	}
-
-	if input.Genres != nil {
-		movie.Genres = input.Genres
-	}
-
-	v := validator.New()
-
-	if data.ValidateMovie(v, movie); !v.Valid() {
-		a.failedValidationResponse(w, r, v.Errors)
-		return
-	}
-
-	err = a.models.Movies.Update(movie)
-	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrEditConfilct):
-			a.editConflictResponse(w, r)
-		default:
-			a.errorResponse(w, r, http.StatusInternalServerError, err)
-		}
-	}
-
-	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
-	if err != nil {
-		a.errorResponse(w, r, http.StatusInternalServerError, err)
-		return
-	}
-}
-
-func (a *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := a.readIDFromParams(r)
-	if err != nil {
-		a.badRequestError(w, r)
-		return
-	}
-
-	if err = a.models.Movies.Delete(int(id)); err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			a.notFoundError(w, r)
-		default:
-			a.internalServerError(w, r)
-		}
-		return
-	}
-
-	err = a.writeJSON(w, http.StatusOK, envelope{"message": "movie successfully deleted"}, nil)
-	if err != nil {
-		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		app.serverErrorResponse(w, r, err)
 	}
 }
