@@ -60,7 +60,6 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	movie, err := app.models.Movies.Get(id)
-	fmt.Printf("Hey! %+v\n", movie)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
