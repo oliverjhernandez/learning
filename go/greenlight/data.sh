@@ -17,3 +17,6 @@ curl -d "$BODY" localhost:3000/v1/movie
 
 BODY='{"title":"Black Panther","year":2018,"runtime":"134 mins","genres":["sci-fi","action","adventure"]}'
 curl -X PUT -d "$BODY" localhost:3000/v1/movie/2
+
+BODY='{"email": "alice@example.com" , "password": "pa55word"}'
+TOKEN=$(curl -d "$BODY" localhost:4000/v1/tokens/authentication | jq -r '.authentication_token.token')
