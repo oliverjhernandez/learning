@@ -39,7 +39,7 @@ db/migrations/up: confirm
 	migrate -path ./migrations/ -database ${GREENLIGHT_DB} up
 
 # ========================================================================== #
-# QUALITY CONTROLE
+# QUALITY CONTROL
 # ========================================================================== #
 
 # audit: tidy dependencies and format, vet and test all code
@@ -68,7 +68,6 @@ vendor:
 # ========================================================================== #
 # BUILD
 # ========================================================================== #
-
 
 current_time = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 git_description = $(shell git describe --always --dirty --tags --long)
