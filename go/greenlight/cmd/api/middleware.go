@@ -185,13 +185,16 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 		w.Header().Set("Vary", "Access-Control-Request-Method")
 
 		origin := r.Header.Get("Origin")
+		trustedOriginsNotEmpty := origin != "" && len(app.config.cors.trustedOrigins) != 0
+		isPreflight := r.Method == http.MethodOptions &&
+			r.Header.Get("Access-Control-Request-Method") != ""
 
-		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
+		if trustedOriginsNotEmpty {
 			for i := range app.config.cors.trustedOrigins {
 				if origin == app.config.cors.trustedOrigins[i] {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 
-					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+					if isPreflight {
 						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
 						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 						w.Header().Set("Access-Control-Max-Age", "60")
