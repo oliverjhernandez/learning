@@ -12,7 +12,11 @@ help:
 
 .PHONY: confirm
 confirm:
-	@echo -n 'Are you sure? [y/N]' && read ans && [ $${ans:-N} = y]
+	@if [ -t 0 ]; then \
+		echo 'Are you sure? [y/N]' && read ans && [ "$${ans:-N}" = "y" -o "$${ans:-N}" = "Y" ] || { echo "Aborted"; exit 1; }; \
+	else \
+		echo "Error: Cannot prompt for confirmation in non-interactive environment"; exit 1; \
+	fi
 
 # ========================================================================== #
 # DEVELOPMENT
