@@ -116,7 +116,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := app.readIDParam(r)
 	if err != nil {
-		app.notFoundResponse(w, r)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
