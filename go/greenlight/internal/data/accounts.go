@@ -13,7 +13,7 @@ import (
 type Account struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
+	Title     string    `json:"title"`
 	ID        int       `json:"id"`
 	UserID    int       `json:"user_id"`
 	Entity    Entity    `json:"entity"`
@@ -65,9 +65,9 @@ func (e Entity) String() string {
 }
 
 func ValidateAccount(v *validator.Validator, a *Account) {
-	// Name
-	v.Check(a.Name != "", "name", "must be provided")
-	v.Check(len(a.Name) >= 2, "name", "must be at least 2 bytes long")
+	// Title
+	v.Check(a.Title != "", "title", "must be provided")
+	v.Check(len(a.Title) >= 2, "title", "must be at least 2 bytes long")
 
 	// UserID
 	v.Check(a.UserID != 0, "user_id", "must be provided")
@@ -86,32 +86,40 @@ type AccountsModel struct {
 func (m AccountsModel) Insert(account *Account) error {
 	query := `
     INSERT INTO accounts
-      (name, user_id, entity, currency, created_at, updated_at)
+      (title, user_id, entity, currency, created_at, updated_at)
     VALUES
       ($1, $2, $3, $4, $5, $6)
-    RETURNING id, created_at;
+    RETURNING id, created_at, updated_at;
   `
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []interface{}{
-		account.Name,
+	args := []any{
+		account.Title,
 		account.UserID,
 		account.Entity,
 		account.Currency,
-		account.CreatedAt,
-		account.CreatedAt,
+		time.Now().UTC(),
+		time.Now().UTC(),
 	}
 
-	return m.DB.QueryRowContext(ctx, query, args...).Scan(&account.ID, account.CreatedAt)
+	fmt.Printf("%+v\n", args...)
+
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&account.ID, &account.CreatedAt, &account.UpdatedAt)
 }
 
 func (m AccountsModel) Get(id int64) (*Account, error) {
 	query := `
-    SELECT id, created_at, name, user_id, entity, currency
+    SELECT
+      id,
+      created_at,
+      title,
+      user_id,
+      entity,
+      currency
     FROM accounts
-  WHERE id = $q;
+    WHERE id = $q;
   `
 
 	var account Account
@@ -122,7 +130,7 @@ func (m AccountsModel) Get(id int64) (*Account, error) {
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&account.ID,
 		&account.CreatedAt,
-		&account.Name,
+		&account.Title,
 		&account.UserID,
 		&account.Entity,
 		&account.Currency,
@@ -139,11 +147,11 @@ func (m AccountsModel) Get(id int64) (*Account, error) {
 	return &account, nil
 }
 
-func (m AccountsModel) GetAll(name string, userID int, entity Entity, currency Currency, filters Filters) ([]*Account, Metadata, error) {
+func (m AccountsModel) GetAll(title string, userID int, entity Entity, currency Currency, filters Filters) ([]*Account, Metadata, error) {
 	query := fmt.Sprintf(`
-  SELECT count(*) OVER(), id, created_at, name, user_id, entity, currency
+  SELECT count(*) OVER(), id, created_at, title, user_id, entity, currency
   FROM accounts
-  WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+  WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
     AND (user_id = $2 OR $2 = '')
     AND (entity = $3 OR $3 = '')
     AND (currency = $4 OR $4 = '')
@@ -153,7 +161,7 @@ func (m AccountsModel) GetAll(name string, userID int, entity Entity, currency C
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []interface{}{name, userID, entity, currency, filters.limit(), filters.offset()}
+	args := []any{title, userID, entity, currency, filters.limit(), filters.offset()}
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -172,7 +180,7 @@ func (m AccountsModel) GetAll(name string, userID int, entity Entity, currency C
 			&totalRecords,
 			&account.ID,
 			&account.CreatedAt,
-			&account.Name,
+			&account.Title,
 			&account.UserID,
 			&account.Entity,
 			&account.Currency,
@@ -196,13 +204,13 @@ func (m AccountsModel) GetAll(name string, userID int, entity Entity, currency C
 func (m AccountsModel) Update(account *Account) error {
 	query := `
   UPDATE accounts
-  SET name = $1, entity = $2, currency = $3
+  SET title = $1, entity = $2, currency = $3
   WHERE id = $4
   RETURNING id
   `
 
-	args := []interface{}{
-		account.Name,
+	args := []any{
+		account.Title,
 		account.Entity,
 		account.Currency,
 		account.ID,

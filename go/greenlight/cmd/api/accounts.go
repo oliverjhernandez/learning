@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"greenlight/internal/data"
 	"greenlight/internal/validator"
@@ -11,7 +12,7 @@ import (
 
 func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name     string        `json:"name"`
+		Title    string        `json:"title"`
 		UserID   int           `json:"user_id"`
 		Entity   data.Entity   `json:"entity"`
 		Currency data.Currency `json:"currency"`
@@ -24,10 +25,12 @@ func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	account := &data.Account{
-		Name:     input.Name,
-		UserID:   input.UserID,
-		Entity:   input.Entity,
-		Currency: input.Currency,
+		Title:     input.Title,
+		UserID:    input.UserID,
+		Entity:    input.Entity,
+		Currency:  input.Currency,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
 	v := validator.New()
@@ -145,7 +148,7 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if input.Name != nil {
-		account.Name = *input.Name
+		account.Title = *input.Name
 	}
 
 	if input.Entity != nil {
