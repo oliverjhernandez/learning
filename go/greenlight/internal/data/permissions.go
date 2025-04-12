@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"slices"
 	"time"
 
 	"github.com/lib/pq"
@@ -11,12 +12,7 @@ import (
 type Permissions []string
 
 func (p Permissions) Include(code string) bool {
-	for i := range p {
-		if code == p[i] {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p, code)
 }
 
 type PermissionModel struct {
@@ -68,7 +64,7 @@ func (m PermissionModel) AddForUser(userID int64, codes ...string) error {
   SELECT $1, permissions.id FROM permissions WHERE permissions.code = ANY($2)
   `
 
-	args := []interface{}{userID, pq.Array(codes)}
+	args := []any{userID, pq.Array(codes)}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

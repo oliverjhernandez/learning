@@ -53,7 +53,7 @@ func (m MovieModel) Insert(movie *Movie) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []interface{}{
+	args := []any{
 		movie.Title,
 		movie.Year,
 		movie.Runtime,
@@ -161,7 +161,7 @@ func (m MovieModel) Update(movie *Movie) error {
   RETURNING version
   `
 
-	args := []interface{}{
+	args := []any{
 		movie.Title,
 		movie.Year,
 		movie.Runtime,
