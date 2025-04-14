@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS entities (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP (0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP (0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    title VARCHAR(255) NOT NULL,
+    kind INT NOT NULL,
+    provider INT NOT NULL,
+    currency INT NOT NULL
+);

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     updated_at TIMESTAMP (0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
     title VARCHAR(255) NOT NULL,
     user_id INT NOT NULL,
-    entity INT NOT NULL,
-    currency INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    entity_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (entity_id) REFERENCES entities (id)
 );
