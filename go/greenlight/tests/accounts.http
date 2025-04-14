@@ -19,23 +19,34 @@ Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
 
 {
-  "title": "some_account",
-  "user_id": 11,
-  "entity": 3,
-  "currency": 1
+  "title": "silly_account",
+  "user_id": 1,
+  "entity_id": 5
 }
 
 ###
 
-GET {{BASE_URL}}/accounts?sort=-entity&currency=2
+GET {{BASE_URL}}/accounts?sort=-entity_id
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
 
 ### 
 
-GET {{BASE_URL}}/accounts/1 HTTP/1.1
+GET {{BASE_URL}}/accounts/14 HTTP/1.1
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
+
+###
+
+PATCH {{BASE_URL}}/accounts/14
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}
+
+{
+  "title": "Corina",
+  "currency": 3
+}
 
 ###
 

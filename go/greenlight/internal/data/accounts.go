@@ -28,8 +28,8 @@ func ValidateAccount(v *validator.Validator, a *Account) {
 	// UserID
 	v.Check(a.UserID != 0, "user_id", "must be provided")
 
-	// Entity
-	v.Check(a.EntityID != 0, "entity", "must be provided")
+	// EntityID
+	v.Check(a.EntityID != 0, "entity_id", "must be provided")
 }
 
 type AccountsModel struct {
@@ -103,7 +103,7 @@ func (m AccountsModel) GetAll(title string, userID int, entityID int, filters Fi
   FROM accounts
   WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
     AND (user_id = $2 OR $2 = 0)
-    AND (entity = $3 OR $3 = 0)
+    AND (entity_id = $3 OR $3 = 0)
   ORDER BY %s %s, id ASC
   LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 

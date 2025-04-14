@@ -14,7 +14,7 @@ func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Requ
 	var input struct {
 		Title    string `json:"title"`
 		UserID   int    `json:"user_id"`
-		EntityID int    `json:"entity"`
+		EntityID int    `json:"entity_id"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -91,12 +91,12 @@ func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Reque
 
 	input.Title = app.readString(qs, "title", "")
 	input.UserID = app.readInt(qs, "user_id", 0, v)
-	input.EntityID = app.readInt(qs, "entity", 0, v)
+	input.EntityID = app.readInt(qs, "entity_id", 0, v)
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 	input.Filters.Sort = app.readString(qs, "sort", "id")
-	input.Filters.SorSafeList = []string{"id", "title", "user_id", "entity", "-id", "-title", "-user_id", "-entity"}
+	input.Filters.SorSafeList = []string{"id", "title", "user_id", "entity_id", "-id", "-title", "-user_id", "-entity_id"}
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
