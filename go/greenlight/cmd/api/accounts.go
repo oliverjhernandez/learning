@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
-
 	"greenlight/internal/data"
 	"greenlight/internal/validator"
+	"net/http"
+	"time"
 )
 
 func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,9 +138,9 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	var input struct {
-		Title    *string
-		UserID   *int
-		EntityID *int
+		Title    *string `json:"title"`
+		UserID   *int    `json:"user_id"`
+		EntityID *int    `json:"entity_id"`
 	}
 
 	err = app.readJSON(w, r, &input)

@@ -26,7 +26,7 @@ Authorization: Bearer {{JWT_CONTEXT}}
 
 ###
 
-GET {{BASE_URL}}/accounts?sort=-entity_id
+GET {{BASE_URL}}/accounts?sort=-entity_id&title=shitty
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
 
@@ -38,19 +38,19 @@ Authorization: Bearer {{JWT_CONTEXT}}
 
 ###
 
-PATCH {{BASE_URL}}/accounts/14
+PATCH {{BASE_URL}}/accounts/5
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
 
 {
   "title": "Corina",
-  "currency": 3
+  "entity_id": 3
 }
 
 ###
 
-DELETE {{BASE_URL}}/accounts/1 HTTP/1.1
+DELETE {{BASE_URL}}/accounts/5 HTTP/1.1
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}

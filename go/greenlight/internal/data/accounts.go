@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
-
 	"greenlight/internal/validator"
+	"time"
 )
 
 type Account struct {
@@ -153,7 +152,7 @@ func (m AccountsModel) Update(account *Account) error {
 	query := `
   UPDATE accounts
   SET title = $1, entity_id = $2
-  WHERE id = $4
+  WHERE id = $3
   RETURNING id
   `
 
