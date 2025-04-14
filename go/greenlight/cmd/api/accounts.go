@@ -12,10 +12,9 @@ import (
 
 func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title    string        `json:"title"`
-		UserID   int           `json:"user_id"`
-		Entity   data.Entity   `json:"entity"`
-		Currency data.Currency `json:"currency"`
+		Title    string `json:"title"`
+		UserID   int    `json:"user_id"`
+		EntityID int    `json:"entity"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -27,8 +26,7 @@ func (app *application) createAccountHandler(w http.ResponseWriter, r *http.Requ
 	account := &data.Account{
 		Title:     input.Title,
 		UserID:    input.UserID,
-		Entity:    input.Entity,
-		Currency:  input.Currency,
+		EntityID:  input.EntityID,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	}
@@ -83,8 +81,7 @@ func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Reque
 	var input struct {
 		Title    string
 		UserID   int
-		Entity   data.Entity
-		Currency data.Currency
+		EntityID int
 		data.Filters
 	}
 
@@ -94,13 +91,12 @@ func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Reque
 
 	input.Title = app.readString(qs, "title", "")
 	input.UserID = app.readInt(qs, "user_id", 0, v)
-	input.Entity = data.Entity(app.readInt(qs, "entity", 0, v))
-	input.Currency = data.Currency(app.readInt(qs, "currency", 0, v))
+	input.EntityID = app.readInt(qs, "entity", 0, v)
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 	input.Filters.Sort = app.readString(qs, "sort", "id")
-	input.Filters.SorSafeList = []string{"id", "title", "user_id", "entity", "currency", "-id", "-title", "-user_id", "-entity", "-currency"}
+	input.Filters.SorSafeList = []string{"id", "title", "user_id", "entity", "-id", "-title", "-user_id", "-entity"}
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
@@ -110,8 +106,7 @@ func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Reque
 	accounts, metadata, err := app.models.Accounts.GetAll(
 		input.Title,
 		input.UserID,
-		input.Entity,
-		input.Currency,
+		input.EntityID,
 		input.Filters,
 	)
 	if err != nil {
@@ -146,8 +141,7 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 	var input struct {
 		Title    *string
 		UserID   *int
-		Entity   *data.Entity
-		Currency *data.Currency
+		EntityID *int
 	}
 
 	err = app.readJSON(w, r, &input)
@@ -160,12 +154,8 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 		account.Title = *input.Title
 	}
 
-	if input.Entity != nil {
-		account.Entity = *input.Entity
-	}
-
-	if input.Currency != nil {
-		account.Currency = *input.Currency
+	if input.EntityID != nil {
+		account.EntityID = *input.EntityID
 	}
 
 	if input.UserID != nil {
