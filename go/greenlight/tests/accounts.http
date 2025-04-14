@@ -1,0 +1,45 @@
+@BASE_URL = http://localhost:4000/v1
+
+
+# @env-stdin-cmd JWT_CONTEXT jq -r '.authentication_token.token'
+POST {{BASE_URL}}/tokens/authentication HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "pa55word"
+}
+
+###
+
+POST {{BASE_URL}}/accounts HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}
+
+{
+  "title": "some_account",
+  "user_id": 11,
+  "entity": 3,
+  "currency": 1
+}
+
+###
+
+GET {{BASE_URL}}/accounts?sort=-entity&currency=2
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}
+
+### 
+
+GET {{BASE_URL}}/accounts/1 HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}
+
+###
+
+DELETE {{BASE_URL}}/accounts/1 HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}

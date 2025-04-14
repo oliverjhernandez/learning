@@ -152,9 +152,9 @@ func (m AccountsModel) GetAll(title string, userID int, entity Entity, currency 
   SELECT count(*) OVER(), id, created_at, title, user_id, entity, currency
   FROM accounts
   WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
-    AND (user_id = $2 OR $2 = '')
-    AND (entity = $3 OR $3 = '')
-    AND (currency = $4 OR $4 = '')
+    AND (user_id = $2 OR $2 = 0)
+    AND (entity = $3 OR $3 = 0)
+    AND (currency = $4 OR $4 = 0)
   ORDER BY %s %s, id ASC
   LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 

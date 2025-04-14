@@ -81,7 +81,7 @@ func (app *application) showAccountHandler(w http.ResponseWriter, r *http.Reques
 
 func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name     string
+		Title    string
 		UserID   int
 		Entity   data.Entity
 		Currency data.Currency
@@ -92,19 +92,28 @@ func (app *application) listAccountsHandler(w http.ResponseWriter, r *http.Reque
 
 	qs := r.URL.Query()
 
-	input.Name = app.readString(qs, "name", "")
+	input.Title = app.readString(qs, "title", "")
+	input.UserID = app.readInt(qs, "user_id", 0, v)
+	input.Entity = data.Entity(app.readInt(qs, "entity", 0, v))
+	input.Currency = data.Currency(app.readInt(qs, "currency", 0, v))
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 	input.Filters.Sort = app.readString(qs, "sort", "id")
-	input.Filters.SorSafeList = []string{"id", "name", "user_id", "entity", "currency", "-id", "-name", "-user_id", "-entity", "-currency"}
+	input.Filters.SorSafeList = []string{"id", "title", "user_id", "entity", "currency", "-id", "-title", "-user_id", "-entity", "-currency"}
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	accounts, metadata, err := app.models.Accounts.GetAll(input.Name, input.UserID, input.Entity, input.Currency, input.Filters)
+	accounts, metadata, err := app.models.Accounts.GetAll(
+		input.Title,
+		input.UserID,
+		input.Entity,
+		input.Currency,
+		input.Filters,
+	)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -135,7 +144,7 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	var input struct {
-		Name     *string
+		Title    *string
 		UserID   *int
 		Entity   *data.Entity
 		Currency *data.Currency
@@ -147,8 +156,8 @@ func (app *application) updateAccountHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if input.Name != nil {
-		account.Title = *input.Name
+	if input.Title != nil {
+		account.Title = *input.Title
 	}
 
 	if input.Entity != nil {
