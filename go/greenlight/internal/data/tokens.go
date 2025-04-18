@@ -6,9 +6,8 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base32"
-	"time"
-
 	"greenlight/internal/validator"
+	"time"
 )
 
 const (
@@ -72,7 +71,7 @@ func (m TokenModel) Insert(token *Token) error {
   INSERT INTO tokens(hash, user_id, expiry, scopes)
   VALUES ($1, $2, $3, $4)
   `
-	args := []interface{}{token.Hash, token.UserID, token.Expiry, token.Scope}
+	args := []any{token.Hash, token.UserID, token.Expiry, token.Scope}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -87,7 +86,7 @@ func (m TokenModel) DeleteAllForUser(scope string, userID int64) error {
   WHERE scopes = $1 AND user_id = $2
   `
 
-	args := []interface{}{scope, userID}
+	args := []any{scope, userID}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

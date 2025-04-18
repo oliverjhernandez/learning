@@ -2,11 +2,10 @@ package main
 
 import (
 	"errors"
-	"net/http"
-	"time"
-
 	"greenlight/internal/data"
 	"greenlight/internal/validator"
+	"net/http"
+	"time"
 )
 
 func (app *application) createActivationTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +51,7 @@ func (app *application) createActivationTokenHandler(w http.ResponseWriter, r *h
 	}
 
 	app.background(func() {
-		data := map[string]interface{}{
+		data := map[string]any{
 			"activationToken": token.Plaintext,
 		}
 

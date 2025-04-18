@@ -5,9 +5,8 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
-	"time"
-
 	"greenlight/internal/validator"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -94,7 +93,7 @@ func (m UserModel) Insert(user *User) error {
   RETURNING id, created_at, version
   `
 
-	args := []interface{}{user.Name, user.Email, user.Password.hash, user.Activated}
+	args := []any{user.Name, user.Email, user.Password.hash, user.Activated}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -153,7 +152,7 @@ func (m UserModel) Update(user *User) error {
   RETURNING version
   `
 
-	args := []interface{}{
+	args := []any{
 		user.Name,
 		user.Email,
 		user.Password.hash,
@@ -194,7 +193,7 @@ func (m *UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error
   AND tokens.expiry > $3
   `
 
-	args := []interface{}{tokenHash[:], tokenScope, time.Now()}
+	args := []any{tokenHash[:], tokenScope, time.Now()}
 
 	var user User
 

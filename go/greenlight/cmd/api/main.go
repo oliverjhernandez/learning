@@ -6,16 +6,15 @@ import (
 	"expvar"
 	"flag"
 	"fmt"
+	"greenlight/internal/data"
+	"greenlight/internal/jsonlog"
+	"greenlight/internal/mailer"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-
-	"greenlight/internal/data"
-	"greenlight/internal/jsonlog"
-	"greenlight/internal/mailer"
 
 	_ "github.com/lib/pq"
 )
@@ -106,13 +105,13 @@ func main() {
 	logger.PrintInfo("database connection pool established", nil)
 
 	expvar.NewString("version").Set(version)
-	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+	expvar.Publish("goroutines", expvar.Func(func() any {
 		return runtime.NumGoroutine()
 	}))
-	expvar.Publish("database", expvar.Func(func() interface{} {
+	expvar.Publish("database", expvar.Func(func() any {
 		return db.Stats()
 	}))
-	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+	expvar.Publish("timestamp", expvar.Func(func() any {
 		return time.Now().Unix()
 	}))
 
