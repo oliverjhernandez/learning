@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"strconv"
-
 	"greenlight/internal/data"
 	"greenlight/internal/validator"
+	"net/http"
+	"strconv"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
