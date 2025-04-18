@@ -12,7 +12,14 @@ Accept: application/json
 
 ###
 
-GET {{BASE_URL}}/movies/3 HTTP/1.1
+GET {{BASE_URL}}/movies HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{JWT_CONTEXT}}
+
+###
+
+GET {{BASE_URL}}/movies/4 HTTP/1.1
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{JWT_CONTEXT}}
