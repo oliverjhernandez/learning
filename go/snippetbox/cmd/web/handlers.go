@@ -7,7 +7,7 @@ import (
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "Go")
+	panic("oooh noooo!")
 
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -15,11 +15,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	td := templateData{
-		Snippets: snippets,
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
 
-	app.render(w, r, http.StatusOK, "home.tmpl.html", td)
+	app.render(w, r, http.StatusOK, "home.tmpl.html", data)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -35,9 +34,8 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := templateData{
-		Snippet: s,
-	}
+	data := app.newTemplateData(r)
+	data.Snippet = s
 
 	app.render(w, r, http.StatusOK, "view.tmpl.html", data)
 }
