@@ -2,9 +2,9 @@
 
 ###
 
-POST {{BASE_URL}}/snippets/create HTTP/1.1
+POST {{BASE_URL}}/snippet/create HTTP/1.1
 
 {}
 
 ###
-GET {{BASE_URL}}/snippets/view/12 HTTP/1.1
+GET {{BASE_URL}}/snippet/view/12 HTTP/1.1
