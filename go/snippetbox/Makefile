@@ -42,7 +42,7 @@ db/migrations/new:
 .PHONY: db/migrations/up
 db/migrations/up: confirm
 	@echo 'Running up migrations...'
-	migrate -path ./migrations/ -database ${SNIPPETBOX_DB} up
+	migrate -path ./migrations/ -database "${SNIPPETBOX_DB}" up
 
 # ========================================================================== #
 # QUALITY CONTROL
