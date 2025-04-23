@@ -5,14 +5,14 @@
     {{ with .Form.FieldErrors.title }}
     <label class="error">{{.}}</label>
     {{ end }}
-    <input type="text" name="title" value="{{.Form.Title}}" />
+    <input type="text" name="Title" value="{{.Form.Title}}" />
   </div>
   <div>
     <label>Content:</label>
     {{ with .Form.FieldErrors.content }}
     <label class="error">{{.}}</label>
     {{ end }}
-    <textarea name="content" value="{{.Form.Content}}"></textarea>
+    <textarea name="Content" value="{{.Form.Content}}"></textarea>
   </div>
   <div>
     <label>Delete in:</label>
@@ -21,7 +21,7 @@
     {{ end }}
     <input
       type="radio"
-      name="expires"
+      name="Expires"
       value="365"
       {{
       if
@@ -34,7 +34,7 @@
     One Year
     <input
       type="radio"
-      name="expires"
+      name="Expires"
       value="7"
       {{
       if
@@ -47,7 +47,7 @@
     One Week
     <input
       type="radio"
-      name="expires"
+      name="Expires"
       value="1"
       {{
       if
