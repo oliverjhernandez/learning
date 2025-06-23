@@ -1,0 +1,151 @@
+/* NAV */
+
+header {
+  display: flex;
+  flex-direction: column;
+  column-gap: 10rem;
+  background-color: #fafbfd;
+  width: 32rem;
+}
+
+.search {
+  font-size: 2.4rem;
+  padding: 3.2rem;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  background-color: #eff1f2;
+}
+
+.search input {
+  padding: 1rem;
+  width: 100%;
+  border: 0;
+}
+
+nav section {
+  padding: 2rem 0;
+  margin: 2rem 0;
+}
+
+.nav-main {
+  /* display: flex; */
+  display: none;
+  flex-direction: column;
+  padding: 0 2rem;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-list {
+  list-style: none;
+}
+
+.nav-item {
+  font-size: 1.2rem;
+  color: #646465;
+  text-transform: uppercase;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 1.3rem 0;
+  border-bottom: 1px solid #e1e2e4;
+}
+
+.nav-item:first-child {
+  font-size: 1.8rem;
+  color: #323233;
+  text-transform: capitalize;
+  font-weight: 700;
+  border-bottom: 0;
+  letter-spacing: 1px;
+  padding: 0 1.2rem 0.6rem 0;
+  border-bottom: 3px solid #f56a6a;
+  margin-bottom: 2.6rem;
+}
+
+.nav-item-anchor {
+  letter-spacing: 1.2px;
+}
+
+.nav-news {
+  border-top: 3px solid #e1e2e4;
+}
+
+.news-list {
+  list-style: none;
+}
+
+.news-list:first-child li:first-child {
+  font-size: 1.8rem;
+  color: #323233;
+  text-transform: capitalize;
+  font-weight: 700;
+  border-bottom: 0;
+  letter-spacing: 1px;
+  padding: 3.2rem 1.2rem 0.6rem 0;
+  border-bottom: 3px solid #f56a6a;
+  margin-bottom: 2.6rem;
+}
+
+.news-item {
+  padding-top: 1.6rem;
+}
+
+.news-img {
+  width: 100%;
+  height: auto;
+  /* padding: 1.2rem; */
+  border-radius: 6px;
+  margin-bottom: 2.4rem;
+}
+
+.news-item p {
+  font-size: 1.4rem;
+  line-height: 1.5;
+  padding-bottom: 2.4rem;
+  border-bottom: 3px solid #e1e2e4;
+}
+
+.nav-contact {
+  border-top: 3px solid #e1e2e4;
+}
+
+.contact-title {
+  font-size: 1.8rem;
+  color: #323233;
+  text-transform: capitalize;
+  font-weight: 700;
+  border-bottom: 0;
+  letter-spacing: 1px;
+  padding: 3.2rem 1.2rem 0.6rem 0;
+  border-bottom: 3px solid #f56a6a;
+  margin-bottom: 2.6rem;
+}
+
+.contact-description {
+  font-size: 1.4rem;
+  line-height: 1.5;
+  padding-bottom: 2.4rem;
+  border-bottom: 3px solid #e1e2e4;
+}
+
+.contact-list {
+  list-style: none;
+  padding: 3.2rem 0;
+}
+
+.contact-item {
+  font-size: 1.4rem;
+  padding: 1.6rem 0;
+  border-bottom: 1px solid #e1e2e4;
+  display: flex;
+  gap: 1rem;
+  justify-items: center;
+  align-items: center;
+}
+
+.icon {
+  color: #f56a6a;
+  height: 2.4rem;
+  width: 2.4rem;
+}
