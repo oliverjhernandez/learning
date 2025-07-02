@@ -1,14 +1,33 @@
+import { useState } from "react";
+
 type PackingListProps = {
   items: itemProp[];
   onDeleteItem: (id: number) => void;
   onToggleItem: (id: number) => void;
+  onHandleClearList: () => void;
 };
 
 const PackingList = (props: PackingListProps) => {
+  const [sortBy, setSortBy] = useState("input");
+
+  let sortedItems: itemProp[] = [];
+
+  if (sortBy == "input") sortedItems = props.items;
+  if (sortBy == "description")
+    sortedItems = props.items.slice().sort((a, b) => {
+      return a.description.localeCompare(b.description);
+    });
+  if (sortBy == "packed")
+    sortedItems = props.items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
+  const emptyList = (e: React.SyntheticEvent<HTMLFormElement>) => {};
+
   return (
     <div className="list">
       <ul>
-        {props.items.map((i) => {
+        {sortedItems.map((i) => {
           return (
             <Item
               key={i.id}
@@ -19,6 +38,20 @@ const PackingList = (props: PackingListProps) => {
           );
         })}
       </ul>
+
+      <div className="actions">
+        <select
+          onChange={(e) => {
+            setSortBy(e.target.value);
+          }}
+          value={sortBy}
+        >
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+        <button onClick={props.onHandleClearList}>Clear List</button>
+      </div>
     </div>
   );
 };
@@ -28,13 +61,13 @@ export default PackingList;
 export type itemProp = {
   id: number;
   description: string;
-  quantity: number;
   packed: boolean;
+  quantity: number;
 };
 
 type ItemProps = {
-  onDeleteItem: (id: number) => void;
   item: itemProp;
+  onDeleteItem: (id: number) => void;
   onToggleItem: (id: number) => void;
 };
 
