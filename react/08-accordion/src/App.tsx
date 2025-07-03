@@ -38,15 +38,19 @@ type AccordionProps = {
 };
 
 const Accordion = (props: AccordionProps) => {
+  const [currentOpen, setCurrentOpen] = useState<number | null>(null);
+
   return (
     <div className="accordion">
       {props.faqs.map((el, i) => {
         return (
           <AccordionItem
-            title={el.title}
             number={el.number}
+            title={el.title}
             text={el.text}
             key={i}
+            currentOpen={currentOpen}
+            onOpen={setCurrentOpen}
           />
         );
       })}
@@ -58,15 +62,16 @@ type AccordionItemProps = {
   number: number;
   title: string;
   text: string;
+  currentOpen: number | null;
+  onOpen: React.Dispatch<React.SetStateAction<number | null>>;
 };
 
 const AccordionItem = (props: AccordionItemProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const isOpen = props.number == props.currentOpen;
 
   const handleToggle = () => {
-    setIsOpen(!isOpen);
+    props.onOpen(props.number);
   };
-
   return (
     <div className={`item ${isOpen ? "open" : ""}`} onClick={handleToggle}>
       <p className="number">
