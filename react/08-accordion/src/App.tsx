@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import "./styles.css";
 
-const faqs: AccordionItemProps[] = [
+const faqs: Faq[] = [
   {
     number: 1,
     title: "Where are these chairs assembled?",
@@ -27,14 +27,14 @@ const App = () => {
   );
 };
 
-type Faqs = {
+type Faq = {
   title: string;
   text: string;
   number: number;
 };
 
 type AccordionProps = {
-  faqs: Faqs[];
+  faqs: Faq[];
 };
 
 const Accordion = (props: AccordionProps) => {
@@ -47,11 +47,12 @@ const Accordion = (props: AccordionProps) => {
           <AccordionItem
             number={el.number}
             title={el.title}
-            text={el.text}
             key={i}
             currentOpen={currentOpen}
             onOpen={setCurrentOpen}
-          />
+          >
+            {el.text}
+          </AccordionItem>
         );
       })}
     </div>
@@ -61,16 +62,16 @@ const Accordion = (props: AccordionProps) => {
 type AccordionItemProps = {
   number: number;
   title: string;
-  text: string;
   currentOpen: number | null;
   onOpen: React.Dispatch<React.SetStateAction<number | null>>;
+  children: ReactNode;
 };
 
 const AccordionItem = (props: AccordionItemProps) => {
   const isOpen = props.number == props.currentOpen;
 
   const handleToggle = () => {
-    props.onOpen(props.number);
+    props.onOpen(isOpen ? null : props.number);
   };
   return (
     <div className={`item ${isOpen ? "open" : ""}`} onClick={handleToggle}>
@@ -79,7 +80,7 @@ const AccordionItem = (props: AccordionItemProps) => {
       </p>
       <p className="title">{props.title}</p>
       <p className="icon">{isOpen ? "-" : "+"}</p>
-      {isOpen && <div className="content-box">{props.text}</div>}
+      {isOpen && <div className="content-box">{props.children}</div>}
     </div>
   );
 };
