@@ -1,27 +1,31 @@
 import type { TMovie } from "../types";
 
 type WatchedMovieProps = {
+  onDelete: (id: string) => void;
   watched: TMovie;
 };
 
-const WatchedMovie = (props: WatchedMovieProps) => {
+const WatchedMovie = ({ watched, onDelete }: WatchedMovieProps) => {
   return (
     <li>
-      <img src={props.watched.Poster} alt={`${props.watched.Title} poster`} />
-      <h3>{props.watched.Title}</h3>
+      <img src={watched.poster} alt={`${watched.title} poster`} />
+      <h3>{watched.title}</h3>
       <div>
         <p>
           <span>⭐️</span>
-          <span>{props.watched.imdbRating}</span>
+          <span>{watched.imdbRating}</span>
         </p>
         <p>
           <span>🌟</span>
-          <span>{props.watched.userRating}</span>
+          <span>{watched.userRating}</span>
         </p>
         <p>
           <span>⏳</span>
-          <span>{props.watched.runtime} min</span>
+          <span>{watched.runtime} min</span>
         </p>
+        <button className="btn-delete" onClick={() => onDelete(watched.imdbID)}>
+          X
+        </button>
       </div>
     </li>
   );

@@ -2,14 +2,15 @@ import type { TMovie } from "../types";
 import Movie from "./Movie";
 
 type MovieListProps = {
+  onSelectMovie: (id: string) => void;
   movies: TMovie[];
 };
 
-const MovieList = (props: MovieListProps) => {
+const MovieList = ({ onSelectMovie, movies }: MovieListProps) => {
   return (
-    <ul className="list">
-      {props.movies.map((movie: TMovie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+    <ul className="list list-movies">
+      {movies.map((movie: TMovie) => (
+        <Movie key={movie.imdbID} movie={movie} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );

@@ -2,14 +2,15 @@ import type { TMovie } from "../types";
 import WatchedMovie from "./WatchedMovie";
 
 type WatchedMovieListProps = {
+  onDelete: (id: string) => void;
   watched: TMovie[];
 };
 
-const WatchedMovieList = (props: WatchedMovieListProps) => {
+const WatchedMovieList = ({ watched, onDelete }: WatchedMovieListProps) => {
   return (
     <ul className="list">
-      {props.watched.map((movie) => (
-        <WatchedMovie watched={movie} key={movie.imdbID} />
+      {watched.map((movie) => (
+        <WatchedMovie watched={movie} key={movie.imdbID} onDelete={onDelete} />
       ))}
     </ul>
   );

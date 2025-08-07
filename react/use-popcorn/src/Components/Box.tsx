@@ -1,7 +1,7 @@
-import { useState, type ReactElement } from "react";
+import { useState } from "react";
 
 type BoxProps = {
-  children: ReactElement | ReactElement[] | undefined;
+  children?: React.ReactNode;
 };
 
 const Box = (props: BoxProps) => {

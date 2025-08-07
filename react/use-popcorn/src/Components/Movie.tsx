@@ -1,18 +1,24 @@
 import type { TMovie } from "../types";
 
 type MovieProps = {
+  onSelectMovie: (id: string) => void;
   movie: TMovie;
 };
 
-const Movie = (props: MovieProps) => {
+const Movie = ({ onSelectMovie, movie }: MovieProps) => {
   return (
-    <li key={props.movie.imdbID}>
-      <img src={props.movie.Poster} alt={`${props.movie.Title} poster`} />
-      <h3>{props.movie.Title}</h3>
+    <li
+      key={movie.imdbID}
+      onClick={() => {
+        onSelectMovie(movie.imdbID);
+      }}
+    >
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>🗓</span>
-          <span>{props.movie.Year}</span>
+          <span>{movie.year}</span>
         </p>
       </div>
     </li>

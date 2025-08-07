@@ -1,7 +1,7 @@
 import Nav from "./Components/Nav";
 import Main from "./Components/Main";
 import "./index.css";
-import { useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import type { TMovie } from "./types";
 import NumResults from "./Components/NumResults";
 import Search from "./Components/Search";
@@ -10,72 +10,117 @@ import MovieList from "./Components/MovieList";
 import Box from "./Components/Box";
 import WatchedSummary from "./Components/WatchedSummary";
 import WatchedMovieList from "./Components/WatchedMovieList";
+import Loader from "./Components/Loader";
+import ErrorMessage from "./Components/ErrorMessage";
+import MovieDetails from "./Components/MovieDetails";
 
-const tempMovieData: TMovie[] = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
+export const key = "644cebbb";
 
-const tempWatchedData: TMovie[] = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
+const App = (): JSX.Element => {
+  const [query, setQuery] = useState<string>("");
+  const [movies, setMovies] = useState<TMovie[]>([]);
+  const [watched, setWatched] = useState<TMovie[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [err, setError] = useState<string>("");
+  const [selectedID, setSelectedID] = useState<string>("");
 
-const App = () => {
-  const [movies, _] = useState(tempMovieData);
-  const [watched, __] = useState(tempWatchedData);
+  const handleSelectMovie = (id: string) => {
+    setSelectedID(selectedID === id ? "" : id);
+  };
+
+  const handleCloseMovie = () => {
+    setSelectedID("");
+  };
+
+  const handleAddWatched = (movie: TMovie) => {
+    setWatched((watched) => [...watched, movie]);
+  };
+
+  const handleDeleteWatched = (id: string) => {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+  };
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          const queryUrl = `http://www.omdbapi.com/?apikey=${key}&s=${query}`;
+          setIsLoading(true);
+          setError("");
+          const res = await fetch(queryUrl);
+
+          if (!res.ok)
+            throw new Error("Something went wrong while fetching movies");
+
+          const data = await res.json();
+          if (data.Response === "False") {
+            throw new Error("Movie not found");
+          }
+
+          const movies: TMovie[] = data.Search.map((movie: any) => ({
+            imdbID: movie.imdbID,
+            title: movie.Title,
+            year: movie.Year,
+            poster: movie.Poster,
+          }));
+
+          setMovies(movies);
+          setError("");
+        } catch (err) {
+          if (err instanceof Error) {
+            console.log(err.message);
+            if (err.name !== "AbortError") {
+              setError(err.message);
+            }
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      if (query.length <= 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
+
+      fetchMovies();
+    },
+    [query],
+  );
 
   return (
     <div>
       <Nav>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults results={movies.length} />
       </Nav>
       <Main>
         <Box>
-          <MovieList movies={movies} />
+          {isLoading && <Loader />}
+          {!isLoading && err && <ErrorMessage message={err} />}
+          {!isLoading && !err && (
+            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+          )}
         </Box>
         <Box>
-          <WatchedSummary watched={watched} />
-          <WatchedMovieList watched={watched} />
+          {selectedID ? (
+            <MovieDetails
+              selectedID={selectedID}
+              onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watchedMovies={watched}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
+              <WatchedMovieList
+                watched={watched}
+                onDelete={handleDeleteWatched}
+              />
+            </>
+          )}
         </Box>
       </Main>
     </div>
