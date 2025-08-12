@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { key } from "../App";
 import StarRating from "./StarRating";
 import Loader from "./Loader";
@@ -34,6 +34,12 @@ const MovieDetails = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [userRating, setUserRating] = useState<number>(0);
 
+  const countRef = useRef(0);
+
+  useEffect(() => {
+    if (userRating) countRef.current++;
+  }, [userRating]);
+
   const isWatched = watchedMovies
     .map((movie) => movie.imdbID)
     .includes(selectedID);
@@ -42,6 +48,7 @@ const MovieDetails = ({
     (movie) => movie.imdbID === selectedID,
   )?.userRating;
 
+  // Escape to exit movie
   useEffect(
     function () {
       const callback = (e: KeyboardEvent) => {
@@ -59,6 +66,7 @@ const MovieDetails = ({
     [onCloseMovie],
   );
 
+  // Get movie details
   useEffect(
     function () {
       const controller = new AbortController();
@@ -87,6 +95,7 @@ const MovieDetails = ({
     [selectedID],
   );
 
+  // Set title from movie details
   useEffect(
     function () {
       if (movie) {
@@ -126,6 +135,7 @@ const MovieDetails = ({
       runtime: Number(runtime.split(" ").at(0)),
       userRating,
       imdbRating: Number(imdbRating),
+      countRatingDecisions: countRef.current,
     };
 
     onAddWatched(watchedMovie);

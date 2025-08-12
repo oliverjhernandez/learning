@@ -42,6 +42,13 @@ const App = (): JSX.Element => {
 
   useEffect(
     function () {
+      localStorage.setItem("watched", JSON.stringify(watched));
+    },
+    [watched],
+  );
+
+  useEffect(
+    function () {
       async function fetchMovies() {
         try {
           const queryUrl = `http://www.omdbapi.com/?apikey=${key}&s=${query}`;

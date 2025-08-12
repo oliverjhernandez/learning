@@ -6,4 +6,5 @@ export type TMovie = {
   runtime?: number;
   imdbRating?: number;
   userRating?: number;
+  countRatingDecisions: number;
 };

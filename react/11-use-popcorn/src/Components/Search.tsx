@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import "../index.css";
 
 type SearchProps = {
@@ -6,6 +7,27 @@ type SearchProps = {
 };
 
 const Search = ({ query, setQuery }: SearchProps) => {
+  const inputElem = useRef<HTMLInputElement>(null);
+
+  useEffect(function () {
+    const callback = (e: KeyboardEvent) => {
+      if (document.activeElement === inputElem.current) {
+        return;
+      }
+
+      if (e.code === "Enter" && inputElem.current !== null) {
+        inputElem.current.focus();
+        setQuery("");
+      }
+    };
+
+    document.addEventListener("keydown", callback);
+
+    return () => {
+      document.removeEventListener("keydown", callback);
+    };
+  }, []);
+
   return (
     <input
       className="search"
@@ -13,6 +35,7 @@ const Search = ({ query, setQuery }: SearchProps) => {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputElem}
     />
   );
 };
