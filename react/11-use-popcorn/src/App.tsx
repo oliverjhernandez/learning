@@ -13,87 +13,36 @@ import WatchedMovieList from "./Components/WatchedMovieList";
 import Loader from "./Components/Loader";
 import ErrorMessage from "./Components/ErrorMessage";
 import MovieDetails from "./Components/MovieDetails";
-
-export const key = "644cebbb";
+import { useMovies } from "./Hooks/useMovie";
 
 const App = (): JSX.Element => {
   const [query, setQuery] = useState<string>("");
-  const [movies, setMovies] = useState<TMovie[]>([]);
   const [watched, setWatched] = useState<TMovie[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [err, setError] = useState<string>("");
   const [selectedID, setSelectedID] = useState<string>("");
 
-  const handleSelectMovie = (id: string) => {
+  const { movies, isLoading, err } = useMovies(query);
+
+  function handleSelectMovie(id: string) {
     setSelectedID(selectedID === id ? "" : id);
-  };
+  }
 
-  const handleCloseMovie = () => {
+  function handleCloseMovie() {
     setSelectedID("");
-  };
+  }
 
-  const handleAddWatched = (movie: TMovie) => {
+  function handleAddWatched(movie: TMovie) {
     setWatched((watched) => [...watched, movie]);
-  };
+  }
 
-  const handleDeleteWatched = (id: string) => {
+  function handleDeleteWatched(id: string) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
-  };
+  }
 
   useEffect(
     function () {
       localStorage.setItem("watched", JSON.stringify(watched));
     },
     [watched],
-  );
-
-  useEffect(
-    function () {
-      async function fetchMovies() {
-        try {
-          const queryUrl = `http://www.omdbapi.com/?apikey=${key}&s=${query}`;
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(queryUrl);
-
-          if (!res.ok)
-            throw new Error("Something went wrong while fetching movies");
-
-          const data = await res.json();
-          if (data.Response === "False") {
-            throw new Error("Movie not found");
-          }
-
-          const movies: TMovie[] = data.Search.map((movie: any) => ({
-            imdbID: movie.imdbID,
-            title: movie.Title,
-            year: movie.Year,
-            poster: movie.Poster,
-          }));
-
-          setMovies(movies);
-          setError("");
-        } catch (err) {
-          if (err instanceof Error) {
-            console.log(err.message);
-            if (err.name !== "AbortError") {
-              setError(err.message);
-            }
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (query.length <= 3) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-
-      fetchMovies();
-    },
-    [query],
   );
 
   return (

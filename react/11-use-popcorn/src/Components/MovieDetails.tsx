@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { key } from "../App";
 import StarRating from "./StarRating";
 import Loader from "./Loader";
 import type { TMovie } from "../types";
+import { key } from "./UseMovie";
 
 type ExMovie = {
   Title: string;
