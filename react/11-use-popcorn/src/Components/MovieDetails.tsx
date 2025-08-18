@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 import Loader from "./Loader";
 import type { TMovie } from "../types";
-import { key } from "./UseMovie";
+import { key } from "../Hooks/useMovie";
 
 type ExMovie = {
   Title: string;
@@ -47,24 +47,6 @@ const MovieDetails = ({
   const watchedUserRating = watchedMovies.find(
     (movie) => movie.imdbID === selectedID,
   )?.userRating;
-
-  // Escape to exit movie
-  useEffect(
-    function () {
-      const callback = (e: KeyboardEvent) => {
-        if (e.code === "Escape") {
-          onCloseMovie();
-        }
-      };
-
-      document.addEventListener("keydown", callback);
-
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onCloseMovie],
-  );
 
   // Get movie details
   useEffect(

@@ -1,7 +1,7 @@
 import Nav from "./Components/Nav";
 import Main from "./Components/Main";
 import "./index.css";
-import { useEffect, useState, type JSX } from "react";
+import { useState, type JSX } from "react";
 import type { TMovie } from "./types";
 import NumResults from "./Components/NumResults";
 import Search from "./Components/Search";
@@ -14,10 +14,13 @@ import Loader from "./Components/Loader";
 import ErrorMessage from "./Components/ErrorMessage";
 import MovieDetails from "./Components/MovieDetails";
 import { useMovies } from "./Hooks/useMovie";
+import { useLocalStorageState } from "./Hooks/useLocalStorageState";
 
 const App = (): JSX.Element => {
   const [query, setQuery] = useState<string>("");
-  const [watched, setWatched] = useState<TMovie[]>([]);
+
+  const [watched, setWatched] = useLocalStorageState<TMovie>([], "watched");
+
   const [selectedID, setSelectedID] = useState<string>("");
 
   const { movies, isLoading, err } = useMovies(query);
@@ -37,13 +40,6 @@ const App = (): JSX.Element => {
   function handleDeleteWatched(id: string) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched],
-  );
 
   return (
     <div>
